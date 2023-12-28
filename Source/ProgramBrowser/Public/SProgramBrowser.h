@@ -41,4 +41,4 @@ private:
     TSharedPtr<class SProgramSimpleList> ProgramSimpleList;
 
     TArray<TSharedRef<IProgram>> Programs;
-}
+};
