@@ -10,7 +10,7 @@ struct IProgram;
 /**
  * 
 */
-class SProgramTile : public SCompoundWidget
+class PROGRAMBROWSER_API SProgramTile : public SCompoundWidget
 {
 public:
     SLATE_BEGIN_ARGS(SProgramTile)

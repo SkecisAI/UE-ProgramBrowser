@@ -26,7 +26,7 @@ struct IProgram
 /**
  * 
 */
-class SProgramBrowser : public SCompoundWidget
+class PROGRAMBROWSER_API SProgramBrowser : public SCompoundWidget
 {
 public:
     SLATE_BEGIN_ARGS(SProgramBrowser)

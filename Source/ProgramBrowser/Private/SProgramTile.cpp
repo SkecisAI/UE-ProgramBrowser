@@ -10,9 +10,9 @@ BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
 #define LOCTEXT_NAMESPACE "ProgramTile"
 
-void SProgramTileList::Construct(const FArguments& InArgs, TSharedRef<IProgram> InProgram)
+void SProgramTile::Construct(const FArguments& InArgs, TSharedRef<IProgram> InProgram)
 {
-    Programs = InProgram;
+    Program = InProgram;
 
     FString IconPath = IPluginManager::Get().FindPlugin("ProgramBrowser")->GetBaseDir() / TEXT("Resources/DefaultProgram.png");
     ProgramIcon = MakeShareable(new FSlateDynamicImageBrush(FName(*IconPath), FVector2D(128, 128)));
@@ -34,7 +34,7 @@ void SProgramTileList::Construct(const FArguments& InArgs, TSharedRef<IProgram> 
 
     ChildSlot
     [
-        SNew(Sborder)
+        SNew(SBorder)
         .BorderImage(FAppStyle::Get().GetBrush("Brushes.Panel"))
         .Padding(5.0f)
         [

@@ -10,7 +10,7 @@ class SProgramBrowser;
 /**
  * 
 */
-class SProgramSimpleList : public SCompoundWidget
+class PROGRAMBROWSER_API SProgramSimpleList : public SCompoundWidget
 {
 public:
     SLATE_BEGIN_ARGS(SProgramSimpleList)
@@ -24,7 +24,7 @@ public:
 private:
     TWeakPtr<SProgramBrowser> Owner;
 
-    TArray<TSharedRef<IProgram> Programs;
+    TArray<TSharedRef<IProgram>> Programs;
     
     TSharedPtr<SListView<TSharedRef<IProgram>>> ProgramSimpleListView;
     

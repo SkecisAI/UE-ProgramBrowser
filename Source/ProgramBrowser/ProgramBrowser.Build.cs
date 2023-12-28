@@ -27,7 +27,10 @@ public class ProgramBrowser : ModuleRules
 			{
 				"Core", 
 				"UnrealEd",
-				"ToolMenus"
+				"ToolMenus",
+				"InputCore",
+				"Projects",
+				"ToolWidgets"
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);

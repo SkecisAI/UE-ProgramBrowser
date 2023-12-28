@@ -14,7 +14,11 @@ void SProgramBrowser::Construct(const FArguments& InArgs)
 {
     for (TCHAR Letter = 'A'; Letter <= 'Z'; ++Letter)
     {
-        Programs.Add(MakeShareable(new IProgram{FString(FTCHARToUTF8(&Letter), TEXT("test"), TEXT("ABC"), TEXT("1.0"))}));
+        Programs.Add(MakeShareable(new IProgram{
+        	FString(FTCHARToUTF8(&Letter)),
+        	TEXT("test"),
+        	TEXT("ABC"),
+        	TEXT("1.0")}));
     }
 
     TSharedRef<SBorder> MainContent = SNew(SBorder)
@@ -48,7 +52,7 @@ void SProgramBrowser::Construct(const FArguments& InArgs)
                     + SHorizontalBox::Slot()
 
                     .VAlign(VAlign_Center)
-                    .AutoWidth
+                    .AutoWidth()
                     [
                         SNew(STextBlock)
                         .TextStyle(FAppStyle::Get(), "SmallButtonText")

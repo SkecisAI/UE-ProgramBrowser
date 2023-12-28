@@ -2,6 +2,7 @@
 
 #include "ProgramBrowser.h"
 
+#include "SProgramBrowser.h"
 #include "ToolMenus.h"
 #include "WorkspaceMenuStructure.h"
 #include "WorkspaceMenuStructureModule.h"
@@ -48,7 +49,13 @@ void FProgramBrowserModule::Initilize()
 
 TSharedRef<SDockTab> FProgramBrowserModule::HandleSpawnProgramBrowserTab(const FSpawnTabArgs& SpawnTabArgs)
 {
-	return SNew(SDockTab).TabRole(ETabRole::MajorTab);
+	TSharedRef<SDockTab> DockTab = SNew(SDockTab)
+		.TabRole(ETabRole::NomadTab)
+		.Content()
+		[
+			SNew(SProgramBrowser)
+		];
+	return DockTab;
 }
 
 #undef LOCTEXT_NAMESPACE

@@ -10,7 +10,7 @@ class SProgramBrowser;
 /**
  * 
 */
-class SProgramTileList : public SCompoundWidget
+class PROGRAMBROWSER_API SProgramTileList : public SCompoundWidget
 {
 public:
     SLATE_BEGIN_ARGS(SProgramTileList)
@@ -22,7 +22,7 @@ public:
     TSharedRef<ITableRow> ProgramTileList_OnGenerateRow(TSharedRef<IProgram> Program, const TSharedRef<STableViewBase>& TableViewBase);
 
 private:
-    TArray<TSharedRef<IProgram> Programs;
+    TArray<TSharedRef<IProgram>> Programs;
     
     TSharedPtr<SListView<TSharedRef<IProgram>>> ProgramListView;
     
