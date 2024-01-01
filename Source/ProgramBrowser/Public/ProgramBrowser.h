@@ -6,6 +6,9 @@
 #include "Features/IPluginsEditorFeature.h"
 #include "Modules/ModuleManager.h"
 
+struct FProgram;
+struct FNewProgramTemplate;
+
 class FProgramBrowserModule : public IModuleInterface
 {
 public:
@@ -13,16 +16,25 @@ public:
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
 
-	void Initilize();
+	void InitilizeBrowserData();
 
 	TSharedRef<SDockTab> HandleSpawnProgramBrowserTab(const FSpawnTabArgs& SpawnTabArgs);
+
+	TSharedRef<SDockTab> HandleSpawnProgramCreatorTab(const FSpawnTabArgs& SpawnTabArgs);
 
 	static const FName ProgramBrowserEditorTabName;
 	static const FName ProgramBrowserCreatorTabName;
 
 	// Programs's path created
-	static const FString NewProgramsDir;
+	static FString ProgramsDir;
 
-	// Program templates path
+	// this plugin path
 	static FString PluginDir;
+
+	static FString ProgramTemplatesDir;
+
+private:
+	TArray<TSharedRef<FNewProgramTemplate>> ProgramTemplates;
+
+	TArray<TSharedRef<FProgram>> Programs;
 };

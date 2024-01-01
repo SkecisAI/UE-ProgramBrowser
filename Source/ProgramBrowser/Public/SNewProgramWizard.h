@@ -5,23 +5,7 @@
 #include "CoreMinimal.h"
 #include "Widgets/SCompoundWidget.h"
 
-struct FNewProgramTemplate
-{
-	FName Name;
-	FString Path;
-	FString IconPath;
-
-	TSharedPtr<FSlateDynamicImageBrush> IconBrush;
-
-	FNewProgramTemplate(const FName& InName, const FString& InPath, const FString& InIconPath)
-		:
-	Name(InName),
-	Path(InPath),
-	IconPath(InIconPath)
-	{
-		IconBrush = MakeShareabel(new FSlateDynamicImageBrush(FName(*IconPath), FVector(128, 128)));
-	}
-};
+struct FNewProgramTemplate;
 
 
 /**
@@ -37,12 +21,12 @@ public:
 	SLATE_END_ARGS()
 
 	/** Constructs this widget with InArgs */
-	void Construct(const FArguments& InArgs);
+	void Construct(const FArguments& InArgs, const TArray<TSharedRef<FNewProgramTemplate>>& InTemplates);
 
 	TSharedRef<ITableRow> OnGenerateTemplateRow(TSharedRef<FNewProgramTemplate> NewProgramTemplate, const TSharedRef<STableViewBase>& TableViewBase);
 
 private:
 	TSharedPtr<SListView<TSharedRef<FNewProgramTemplate>>> TemplateListView;
 
-	TArray<TSaredRef<FNewProgramTemplate>> NewProgramTemplates;
+	TArray<TSharedRef<FNewProgramTemplate>> NewProgramTemplates;
 };

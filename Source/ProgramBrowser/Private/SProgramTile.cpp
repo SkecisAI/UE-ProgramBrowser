@@ -1,16 +1,32 @@
 
 
 #include "SProgramTile.h"
+
+#include "PakFileUtilities.h"
+#include "ProgramBrowserBlueprintLibrary.h"
 #include "SlateOptMacros.h"
 #include "SPrimaryButton.h"
-#include "SProgramBrowser.h"
+#include "ProgramData.h"
+#include "TargetReceipt.h"
 #include "Interfaces/IPluginManager.h"
+#include "Misc/FileHelper.h"
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
 #define LOCTEXT_NAMESPACE "ProgramTile"
 
-void SProgramTile::Construct(const FArguments& InArgs, TSharedRef<IProgram> InProgram)
+SProgramTile::~SProgramTile()
+{
+    for (TSharedPtr<FProgramBrowserWorker>& Worker : BuildWorkers)
+    {
+        if (Worker.IsValid())
+        {
+            Worker->Join();
+        }
+    }
+}
+
+void SProgramTile::Construct(const FArguments& InArgs, TSharedRef<FProgram> InProgram)
 {
     Program = InProgram;
 
@@ -109,7 +125,7 @@ void SProgramTile::Construct(const FArguments& InArgs, TSharedRef<IProgram> InPr
                     .HAlign(HAlign_Right)
                     [
                         SNew(SHorizontalBox)
-
+                        // configuration
                         + SHorizontalBox::Slot()
                         .AutoWidth()
                         [
@@ -131,7 +147,16 @@ void SProgramTile::Construct(const FArguments& InArgs, TSharedRef<IProgram> InPr
                         .AutoWidth()
                         [
                             SNew(SPrimaryButton)
-                            .Text(LOCTEXT("ProgramPackageLabel", "Package"))
+                            .Text(LOCTEXT("ProgramBuildLable", "Build"))
+                            .OnClicked(this, &SProgramTile::OnBuildProgramClicked)
+                        ]
+
+                        + SHorizontalBox::Slot()
+                        .AutoWidth()
+                        [
+                            SNew(SPrimaryButton)
+                            .Text(LOCTEXT("ProgramPackageLable", "Package"))
+                            .OnClicked(this, &SProgramTile::OnPackageProgramClicked)
                         ]
                     ]
                 ]
@@ -152,7 +177,94 @@ void SProgramTile::HandleConfigurationChanged(FName Name)
 
 FText SProgramTile::GetConfigText() const
 {
-    return ConfigurationText;
+    return ConfigurationText.IsEmpty() ? FText::FromString(TEXT("Configuration")) : ConfigurationText;
+}
+
+FReply SProgramTile::OnBuildProgramClicked()
+{
+    BuildWorkers.Add(MakeShareable(new FProgramBrowserWorker(
+        FString::Printf(TEXT("BuildProgram-%s"), *(Program->Name.ToString())),
+        [this]
+        {
+            FString BuildCommandline;
+            FString Configuration = ConfigurationText.ToString();
+            FString OutputMessage;
+
+
+            BuildCommandline += Program->Name.ToString() + TEXT(" ");
+            BuildCommandline += TEXT("Win64 ");
+            BuildCommandline += Configuration;
+            
+            UProgramBrowserBlueprintLibrary::BuildProgram(BuildCommandline, Program->Name.ToString());
+        })));
+
+    return FReply::Handled();
+}
+
+FReply SProgramTile::OnPackageProgramClicked()
+{
+    BuildWorkers.Add(MakeShareable(new FProgramBrowserWorker(
+        FString::Printf(TEXT("PackageProgram-%s"), *Program->Name.ToString()),
+        [&]()
+        {
+            TArray<FString> PakCommandsList;
+            FString ProgramTargetName;
+            if (ConfigurationText.ToString().Equals(TEXT("Debug")))
+            {
+                ProgramTargetName = Program->Name.ToString() + TEXT("-Win64-Debug");
+            }
+            else if (ConfigurationText.ToString().Equals(TEXT("Shipping")))
+            {
+                ProgramTargetName = Program->Name.ToString() + TEXT("-Win64-Shipping");
+            }
+            else
+            {
+                ProgramTargetName = Program->Name.ToString();
+            }
+
+            FString ReceiptPath = FPaths::Combine(FPaths::EngineDir(), TEXT("Binaries\\Win64"), ProgramTargetName + TEXT(".target"));
+            FTargetReceipt Receipt;
+            if(!Receipt.Read(ReceiptPath))
+            {
+                UE_LOG(LogTemp, Error, TEXT("Program %s target not existed."), *Program->Name.ToString())
+                return;
+            }
+
+            for (const FRuntimeDependency& Dependency : Receipt.RuntimeDependencies)
+            {
+                FString DependencyRelPath = Dependency.Path;
+                PakCommandsList.Add(FString::Printf(TEXT("\"%s\" \"%s\" -compress"), *FPaths::ConvertRelativePathToFull(DependencyRelPath), *DependencyRelPath));
+            }
+
+            TArray<FString> AdditionalDependicesFiles;
+            UProgramBrowserBlueprintLibrary::GetProgramAdditionalDependenciesDirs(AdditionalDependicesFiles);
+            for (const FString& Dir : AdditionalDependicesFiles)
+            {
+                TArray<FString> AdditionalFiles;
+                IFileManager::Get().FindFilesRecursive(AdditionalFiles, *Dir, TEXT("*.*"), true, false, false);
+                for (FString& Filepath : AdditionalFiles)
+                {
+                    PakCommandsList.Add(FString::Printf(TEXT("\"%s\" \"%s\" -compress"), *FPaths::ConvertRelativePathToFull(Filepath), *Filepath));
+                }
+            }
+
+    
+            FString PakFilePath = FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("Programs"), Program->Name.ToString()) / Program->Name.ToString() + TEXT(".pak");
+            FString PakCommandsFile = FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("Programs"), Program->Name.ToString()) / TEXT("PakCommandList.txt");
+            FFileHelper::SaveStringArrayToFile(PakCommandsList, *PakCommandsFile);
+            
+            FString UnrealPakCMD = FString::Printf(TEXT("\"%s\" -create=\"%s\" -compressionformats=Oodle"), *PakFilePath, *PakCommandsFile);
+
+            ExecuteUnrealPak(*UnrealPakCMD);
+
+            UProgramBrowserBlueprintLibrary::StageProgram(
+                Program->Name.ToString(),
+                ProgramTargetName,
+                PakFilePath,
+                FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("Programs"), Program->Name.ToString()));
+        })));
+    
+    return FReply::Handled();
 }
 
 #undef LOCTEXT_NAMESPACE

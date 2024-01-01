@@ -3,25 +3,9 @@
 #include "CoreMinimal.h"
 #include "Widgets/SCompoundWidget.h"
 
-class FString;
-class FName;
-
-struct IProgram
-{
-    FName Name;
-    FString Description;
-    FName Author;
-    FName Version;
-    FName Configuration;
-
-    IProgram(const FString& InName, const FString& InDesc, const FString& InAuthor, const FString& InVersion)
-        :
-    Name(InName),
-    Description(InDesc),
-    Author(InAuthor),
-    Version(InVersion)
-    {}
-};
+struct FProgram;
+class SProgramTileList;
+class SProgramSimpleList;
 
 /**
  * 
@@ -33,12 +17,14 @@ public:
         {}
     SLATE_END_ARGS()
 
-    void Construct(const FArguments& InArgs);
-    const TArray<TSharedRef<IProgram>>& GetPrograms() {return Programs;}
+    void Construct(const FArguments& InArgs, const TArray<TSharedRef<FProgram>>& InPrograms);
+    const TArray<TSharedRef<FProgram>>& GetPrograms() {return Programs;}
+
+    FReply OnCreateProgramClicked();
 
 private:
-    TSharedPtr<class SProgramTileList> ProgramTileList;
-    TSharedPtr<class SProgramSimpleList> ProgramSimpleList;
+    TSharedPtr<SProgramTileList> ProgramTileList;
+    TSharedPtr<SProgramSimpleList> ProgramSimpleList;
 
-    TArray<TSharedRef<IProgram>> Programs;
+    TArray<TSharedRef<FProgram>> Programs;
 };

@@ -4,7 +4,7 @@
 #include "Widgets/SCompoundWidget.h"
 
 
-struct IProgram;
+struct FProgram;
 class SProgramBrowser;
 
 /**
@@ -19,12 +19,12 @@ public:
 
     void Construct(const FArguments& InArgs, const TSharedRef<SProgramBrowser> InOwner);
 
-    TSharedRef<ITableRow> ProgramTileList_OnGenerateRow(TSharedRef<IProgram> Program, const TSharedRef<STableViewBase>& TableViewBase);
+    TSharedRef<ITableRow> ProgramTileList_OnGenerateRow(TSharedRef<FProgram> Program, const TSharedRef<STableViewBase>& TableViewBase);
 
 private:
-    TArray<TSharedRef<IProgram>> Programs;
+    TArray<TSharedRef<FProgram>> Programs;
     
-    TSharedPtr<SListView<TSharedRef<IProgram>>> ProgramListView;
+    TSharedPtr<SListView<TSharedRef<FProgram>>> ProgramListView;
     
     TWeakPtr<SProgramBrowser> Owner;
 };

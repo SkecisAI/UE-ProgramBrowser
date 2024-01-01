@@ -30,7 +30,9 @@ public class ProgramBrowser : ModuleRules
 				"ToolMenus",
 				"InputCore",
 				"Projects",
-				"ToolWidgets"
+				"ToolWidgets",
+				"DesktopPlatform",
+				"PakFileUtilities"
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);

@@ -14,7 +14,7 @@ void SProgramTileList::Construct(const FArguments& InArgs, const TSharedRef<SPro
     Owner = InOwner;
     Programs = InOwner->GetPrograms();
 
-    ProgramListView = SNew(SListView<TSharedRef<IProgram>>)
+    ProgramListView = SNew(SListView<TSharedRef<FProgram>>)
     .SelectionMode(ESelectionMode::None)
     .ListItemsSource(&Programs)
     .OnGenerateRow(this, &SProgramTileList::ProgramTileList_OnGenerateRow);
@@ -25,9 +25,9 @@ void SProgramTileList::Construct(const FArguments& InArgs, const TSharedRef<SPro
     ];
 }
 
-TSharedRef<ITableRow> SProgramTileList::ProgramTileList_OnGenerateRow(TSharedRef<IProgram> Program, const TSharedRef<STableViewBase>& TableViewBase)
+TSharedRef<ITableRow> SProgramTileList::ProgramTileList_OnGenerateRow(TSharedRef<FProgram> Program, const TSharedRef<STableViewBase>& TableViewBase)
 {
-    return SNew(STableRow<TSharedRef<IProgram>>, TableViewBase)
+    return SNew(STableRow<TSharedRef<FProgram>>, TableViewBase)
     [
         SNew(SProgramTile, Program)
     ];

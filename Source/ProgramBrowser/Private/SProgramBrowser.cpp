@@ -1,25 +1,29 @@
 
 
 #include "SProgramBrowser.h"
+
+#include "ProgramBrowser.h"
 #include "SlateOptMacros.h"
 #include "SProgramSimpleList.h"
 #include "SProgramTileList.h"
 #include "Widgets/Input/SSearchBox.h"
+#include "ProgramData.h"
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
 #define LOCTEXT_NAMESPACE "ProgramEditor"
 
-void SProgramBrowser::Construct(const FArguments& InArgs)
+void SProgramBrowser::Construct(const FArguments& InArgs, const TArray<TSharedRef<FProgram>>& InPrograms)
 {
-    for (TCHAR Letter = 'A'; Letter <= 'Z'; ++Letter)
-    {
-        Programs.Add(MakeShareable(new IProgram{
-        	FString(FTCHARToUTF8(&Letter)),
-        	TEXT("test"),
-        	TEXT("ABC"),
-        	TEXT("1.0")}));
-    }
+    // for (TCHAR Letter = 'A'; Letter <= 'Z'; ++Letter)
+    // {
+    //     Programs.Add(MakeShareable(new FProgram{
+    //     	FString(FTCHARToUTF8(&Letter)),
+    //     	TEXT("test"),
+    //     	TEXT("ABC"),
+    //     	TEXT("1.0")}));
+    // }
+    Programs = InPrograms;
 
     TSharedRef<SBorder> MainContent = SNew(SBorder)
     .BorderImage(FAppStyle::Get().GetBrush("Brushes.Panel"))
@@ -38,6 +42,7 @@ void SProgramBrowser::Construct(const FArguments& InArgs)
             .AutoWidth()
             [
                 SNew(SButton)
+                .OnClicked(this, &SProgramBrowser::OnCreateProgramClicked)
                 .Content()
                 [
                     SNew(SHorizontalBox)
@@ -90,6 +95,13 @@ void SProgramBrowser::Construct(const FArguments& InArgs)
     [
         MainContent
     ];
+}
+
+FReply SProgramBrowser::OnCreateProgramClicked()
+{
+    FGlobalTabmanager::Get()->TryInvokeTab(FProgramBrowserModule::ProgramBrowserCreatorTabName);
+
+    return FReply::Handled();
 }
 
 #undef LOCTEXT_NAMESPACE

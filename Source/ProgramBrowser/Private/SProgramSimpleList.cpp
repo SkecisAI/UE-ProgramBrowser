@@ -3,6 +3,7 @@
 #include "SProgramSimpleList.h"
 #include "SlateOptMacros.h"
 #include "SProgramBrowser.h"
+#include "ProgramData.h"
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
@@ -13,7 +14,7 @@ void SProgramSimpleList::Construct(const FArguments& InArgs, const TSharedRef<SP
     Owner = InOwner;
     Programs = InOwner->GetPrograms();
 
-    ProgramSimpleListView = SNew(SListView<TSharedRef<IProgram>>)
+    ProgramSimpleListView = SNew(SListView<TSharedRef<FProgram>>)
     .SelectionMode(ESelectionMode::Single)
     .ListItemsSource(&Programs)
     .ListViewStyle(&FAppStyle::Get().GetWidgetStyle<FTableViewStyle>("SimpleListView"))
@@ -25,9 +26,9 @@ void SProgramSimpleList::Construct(const FArguments& InArgs, const TSharedRef<SP
     ];
 }
 
-TSharedRef<ITableRow> SProgramSimpleList::ProgramSimpleList_OnGenerateRow(TSharedRef<IProgram> Program, const TSharedRef<STableViewBase>& TableViewBase)
+TSharedRef<ITableRow> SProgramSimpleList::ProgramSimpleList_OnGenerateRow(TSharedRef<FProgram> Program, const TSharedRef<STableViewBase>& TableViewBase)
 {
-    return SNew(STableRow<TSharedRef<IProgram>>, TableViewBase)
+    return SNew(STableRow<TSharedRef<FProgram>>, TableViewBase)
     [
         SNew(SBorder)
         .BorderImage(FAppStyle::GetBrush("NoBorder"))

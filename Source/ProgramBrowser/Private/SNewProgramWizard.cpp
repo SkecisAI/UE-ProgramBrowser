@@ -4,24 +4,29 @@
 #include "SNewProgramWizard.h"
 
 #include "SlateOptMacros.h"
+#include "SPrimaryButton.h"
+#include "ProgramData.h"
+#include "Interfaces/IPluginManager.h"
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
 #define LOCTEXT_NAMESPACE "NewProgramWizard"
 
-void SNewProgramWizard::Construct(const FArguments& InArgs)
+void SNewProgramWizard::Construct(const FArguments& InArgs, const TArray<TSharedRef<FNewProgramTemplate>>& InTemplates)
 {
-	NewProgramTemplates.Add(MakeShareable(new FNewProgramTemplate(
-		FName("Blank"), 
-		FString("A blank program with console."),
-		IPluginManager::Get().FindPlugin("ProgramBrowser")->GetBaseDir() / TEXT("Resource/terminal.png"))));
-	NewProgramTemplates.Add(MakeShareable(new FNewProgramTemplate(
-		FName("Slate Window"), 
-		FString("A program with slate UI."),
-		IPluginManager::Get().FindPlugin("ProgramBrowser")->GetBaseDir() / TEXT("Resource/window.png"))));
+	// NewProgramTemplates.Add(MakeShareable(new FNewProgramTemplate(
+	// 	FName("Blank"), 
+	// 	FString("A blank program with console."),
+	// 	IPluginManager::Get().FindPlugin("ProgramBrowser")->GetBaseDir() / TEXT("Resources/terminal.png"))));
+	// NewProgramTemplates.Add(MakeShareable(new FNewProgramTemplate(
+	// 	FName("Slate Window"), 
+	// 	FString("A program with slate UI."),
+	// 	IPluginManager::Get().FindPlugin("ProgramBrowser")->GetBaseDir() / TEXT("Resources/window.png"))));
+
+	NewProgramTemplates = InTemplates;
 	
 	TemplateListView = SNew(SListView<TSharedRef<FNewProgramTemplate>>)
-		.ListItemSource(&NewProgramTemplates)
+		.ListItemsSource(&NewProgramTemplates)
 		.OnGenerateRow(this, &SNewProgramWizard::OnGenerateTemplateRow);
 	
 	TSharedRef<SVerticalBox> MainContent = SNew(SVerticalBox)

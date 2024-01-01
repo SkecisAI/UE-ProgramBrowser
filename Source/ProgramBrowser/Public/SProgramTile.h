@@ -5,7 +5,8 @@
 #include "CoreMinimal.h"
 #include "Widgets/SCompoundWidget.h"
 
-struct IProgram;
+class FProgramBrowserWorker;
+struct FProgram;
 
 /**
  * 
@@ -17,7 +18,9 @@ public:
         {}
     SLATE_END_ARGS()
 
-    void Construct(const FArguments& InArgs, TSharedRef<IProgram> InProgram);
+    ~SProgramTile();
+
+    void Construct(const FArguments& InArgs, TSharedRef<FProgram> InProgram);
 
     FText GetProgramNameText() const;
 
@@ -25,12 +28,18 @@ public:
 
     FText GetConfigText() const;
 
+    FReply OnBuildProgramClicked();
+
+    FReply OnPackageProgramClicked();
+    
 private:
-    TSharedPtr<IProgram> Program;
+    TSharedPtr<FProgram> Program;
 
     TSharedPtr<FSlateDynamicImageBrush> ProgramIcon;
 
     FText ConfigurationText;
 
     TSharedPtr<STextBlock> ContentWidget;
+
+    TArray<TSharedPtr<FProgramBrowserWorker>> BuildWorkers;
 };

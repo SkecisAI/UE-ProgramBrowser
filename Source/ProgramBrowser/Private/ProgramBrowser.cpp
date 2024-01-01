@@ -2,6 +2,8 @@
 
 #include "ProgramBrowser.h"
 
+#include "ProgramData.h"
+#include "SNewProgramWizard.h"
 #include "SProgramBrowser.h"
 #include "ToolMenus.h"
 #include "WorkspaceMenuStructure.h"
@@ -14,12 +16,13 @@
 
 const FName FProgramBrowserModule::ProgramBrowserEditorTabName = TEXT("ProgramsEditor");
 const FName FProgramBrowserModule::ProgramBrowserCreatorTabName = TEXT("ProgramCreator");
-const FString FProgramBrowserModule::NewProgramsDir = FPaths::Combine(FPaths::EngineSourceDir(), TEXT("Programs/ProgramBrowserExplorer"));
+FString FProgramBrowserModule::ProgramsDir;
 FString FProgramBrowserModule::PluginDir;
+FString FProgramBrowserModule::ProgramTemplatesDir;
 
 void FProgramBrowserModule::StartupModule()
 {
-	Initilize();
+	InitilizeBrowserData();
 	
 	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(ProgramBrowserEditorTabName,
 		FOnSpawnTab::CreateRaw(this, &FProgramBrowserModule::HandleSpawnProgramBrowserTab))
@@ -29,6 +32,11 @@ void FProgramBrowserModule::StartupModule()
 		.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "Icons.Package"))
 		.SetMenuType(ETabSpawnerMenuType::Enabled);
 
+	FGlobalTabmanager::Get()->RegisterNomadTabSpawner(ProgramBrowserCreatorTabName,
+		FOnSpawnTab::CreateRaw(this, &FProgramBrowserModule::HandleSpawnProgramCreatorTab))
+		.SetDisplayName(LOCTEXT("ProgramCreatorTitle", "Create Program Wizard"))
+		.SetMenuType(ETabSpawnerMenuType::Hidden);
+
 }
 
 void FProgramBrowserModule::ShutdownModule()
@@ -37,14 +45,38 @@ void FProgramBrowserModule::ShutdownModule()
 	// we call this function before unloading the module.
 }
 
-void FProgramBrowserModule::Initilize()
+void FProgramBrowserModule::InitilizeBrowserData()
 {
-	if (!FPaths::DirectoryExists(NewProgramsDir))
+	if (!FPaths::DirectoryExists(ProgramsDir))
 	{
-		IFileManager::Get().MakeDirectory(*NewProgramsDir);
+		IFileManager::Get().MakeDirectory(*ProgramsDir);
 	}
 
-	PluginDir = IPluginManager::Get().FindPlugin("ProgramBrowser")->GetBaseDir();
+	PluginDir           = IPluginManager::Get().FindPlugin("ProgramBrowser")->GetBaseDir();
+	ProgramTemplatesDir = PluginDir / TEXT("Templates");
+	ProgramsDir      = FPaths::EngineSourceDir() / TEXT("Programs/Programs_Collection");
+
+	TArray<FString> Files;
+	IFileManager::Get().FindFiles(Files, *(ProgramTemplatesDir / TEXT("*")), false, true);
+	for (const FString& File : Files)
+	{
+		ProgramTemplates.Add(MakeShareable(new FNewProgramTemplate(
+			FName(File),
+			ProgramTemplatesDir / File,
+			ProgramTemplatesDir / File / TEXT("Resources/Icon.png"))));
+	}
+
+	Files.Empty();
+	IFileManager::Get().FindFiles(Files, *(ProgramsDir / TEXT("*")), false, true);
+	for (const FString& File : Files)
+	{
+		Programs.Add(MakeShareable(new FProgram(
+			File,
+			"",
+			"",
+			"1.0"
+			)));
+	}
 }
 
 TSharedRef<SDockTab> FProgramBrowserModule::HandleSpawnProgramBrowserTab(const FSpawnTabArgs& SpawnTabArgs)
@@ -53,8 +85,19 @@ TSharedRef<SDockTab> FProgramBrowserModule::HandleSpawnProgramBrowserTab(const F
 		.TabRole(ETabRole::NomadTab)
 		.Content()
 		[
-			SNew(SProgramBrowser)
+			SNew(SProgramBrowser, Programs)
 		];
+	return DockTab;
+}
+
+TSharedRef<SDockTab> FProgramBrowserModule::HandleSpawnProgramCreatorTab(const FSpawnTabArgs& SpawnTabArgs)
+{
+	TSharedRef<SDockTab> DockTab = SNew(SDockTab)
+	.TabRole(ETabRole::NomadTab)
+	.Content()
+	[
+		SNew(SNewProgramWizard, ProgramTemplates)
+	];
 	return DockTab;
 }
 
