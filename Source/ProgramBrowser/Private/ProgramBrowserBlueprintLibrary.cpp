@@ -4,7 +4,11 @@
 #include "ProgramBrowserBlueprintLibrary.h"
 
 #include "DesktopPlatformModule.h"
+#include "ProgramModuleResource.h"
 #include "Misc/FileHelper.h"
+
+#define EXE_RESOURCE_ID 201
+#define EXE_ARG_ID      202
 
 bool UProgramBrowserBlueprintLibrary::BuildProgram(const FString& Commandline, const FString& ProgramName)
 {
@@ -42,6 +46,7 @@ void UProgramBrowserBlueprintLibrary::GetProgramAdditionalDependenciesDirs(TArra
 {
 	DependenciesDirs.Add(FPaths::Combine(FPaths::EngineContentDir(), TEXT("Slate\\Common")));
 	DependenciesDirs.Add(FPaths::Combine(FPaths::EngineContentDir(), TEXT("Slate\\Old")));
+	DependenciesDirs.Add(FPaths::Combine(FPaths::EngineContentDir(), TEXT("Editor\\Slate\\Icons")));
 	DependenciesDirs.Add(FPaths::Combine(FPaths::EngineContentDir(), TEXT("Internationalization")));
 	DependenciesDirs.Add(FPaths::Combine(FPaths::EngineDir(), TEXT("Shaders\\StandaloneRenderer")));
 }
@@ -50,6 +55,8 @@ void UProgramBrowserBlueprintLibrary::StageProgram(const FString& ProgramName, c
 {
 	UE_LOG(LogTemp, Warning, TEXT("=================== Stage Program %s Started. ==================="), *ProgramName);
 	
+	IFileManager::Get().DeleteDirectory(*StageDir, false, true);
+
 	TArray<FString> ExeDependencies;
 	ExeDependencies.Add(TEXT("tbb.dll"));
 	ExeDependencies.Add(TEXT("tbbmalloc.dll"));
@@ -62,6 +69,23 @@ void UProgramBrowserBlueprintLibrary::StageProgram(const FString& ProgramName, c
 		IFileManager::Get().Copy(*(Dest / Dependency), *FPaths::Combine(FPaths::EngineDir(), TEXT("Binaries\\Win64"), Dependency));
 	}
 	IFileManager::Get().Copy(*FPaths::Combine(StageDir, TEXT("Engine\\Content\\Paks"), ProgramName + TEXT(".pak")), *ProgramPakFile);
+
+	FString BootstrapPath = FPaths::Combine(FPaths::EngineDir(), TEXT("Binaries\\Win64\\BootstrapPackagedGame-Win64-Shipping.exe"));
+	FString ProgramBootstrapPath = FPaths::Combine(StageDir, ProgramName + TEXT(".exe"));
+	IFileManager::Get().Copy(*ProgramBootstrapPath, *BootstrapPath);
+
+	if (!IFileManager::Get().FileExists(*BootstrapPath))
+	{
+		UE_LOG(LogTemp, Error, TEXT("Stage program failed! %s doesn't exist!"), *BootstrapPath);
+		return;
+	}
+
+	TSharedPtr<FProgramModuleResource> ProgramModuleResource = MakeShared<FProgramModuleResource>(ProgramBootstrapPath, false);
+	FString RealExePath = TEXT("Engine\\Binaries\\Win64\\") + ProgramTargetName + TEXT(".exe") + TEXT("\0");
+	FString ExeArg = ProgramName + TEXT("\0");
+
+	ProgramModuleResource->SetData(EXE_RESOURCE_ID, const_cast<TCHAR*>(*RealExePath), RealExePath.Len() * sizeof(TCHAR));
+	ProgramModuleResource->SetData(EXE_ARG_ID, const_cast<TCHAR*>(*ExeArg), ExeArg.Len() * sizeof(TCHAR));
 
 	UE_LOG(LogTemp, Warning, TEXT("=================== Stage Program %s End. ==================="), *ProgramName);
 	UE_LOG(LogTemp, Warning, TEXT("=================== Package %s Finished. ==================="), *ProgramName);

@@ -261,7 +261,7 @@ FReply SProgramTile::OnPackageProgramClicked()
                 Program->Name.ToString(),
                 ProgramTargetName,
                 PakFilePath,
-                FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("Programs"), Program->Name.ToString()));
+                FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("Programs"), Program->Name.ToString(), Program->Name.ToString()));
         })));
     
     return FReply::Handled();
