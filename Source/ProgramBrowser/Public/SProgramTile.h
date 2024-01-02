@@ -31,6 +31,8 @@ public:
     FReply OnBuildProgramClicked();
 
     FReply OnPackageProgramClicked();
+
+    void BuildProgramCommand();
     
 private:
     TSharedPtr<FProgram> Program;

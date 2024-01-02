@@ -5,7 +5,6 @@
 
 #include "DesktopPlatformModule.h"
 #include "ProgramModuleResource.h"
-#include "Misc/FileHelper.h"
 
 #define EXE_RESOURCE_ID 201
 #define EXE_ARG_ID      202
@@ -53,8 +52,6 @@ void UProgramBrowserBlueprintLibrary::GetProgramAdditionalDependenciesDirs(TArra
 
 void UProgramBrowserBlueprintLibrary::StageProgram(const FString& ProgramName, const FString& ProgramTargetName, const FString& ProgramPakFile, const FString& StageDir)
 {
-	UE_LOG(LogTemp, Warning, TEXT("=================== Stage Program %s Started. ==================="), *ProgramName);
-	
 	IFileManager::Get().DeleteDirectory(*StageDir, false, true);
 
 	TArray<FString> ExeDependencies;
@@ -68,7 +65,7 @@ void UProgramBrowserBlueprintLibrary::StageProgram(const FString& ProgramName, c
 	{
 		IFileManager::Get().Copy(*(Dest / Dependency), *FPaths::Combine(FPaths::EngineDir(), TEXT("Binaries\\Win64"), Dependency));
 	}
-	IFileManager::Get().Copy(*FPaths::Combine(StageDir, TEXT("Engine\\Content\\Paks"), ProgramName + TEXT(".pak")), *ProgramPakFile);
+	IFileManager::Get().Move(*FPaths::Combine(StageDir, TEXT("Engine\\Content\\Paks"), ProgramName + TEXT(".pak")), *ProgramPakFile);
 
 	FString BootstrapPath = FPaths::Combine(FPaths::EngineDir(), TEXT("Binaries\\Win64\\BootstrapPackagedGame-Win64-Shipping.exe"));
 	FString ProgramBootstrapPath = FPaths::Combine(StageDir, ProgramName + TEXT(".exe"));
@@ -86,7 +83,4 @@ void UProgramBrowserBlueprintLibrary::StageProgram(const FString& ProgramName, c
 
 	ProgramModuleResource->SetData(EXE_RESOURCE_ID, const_cast<TCHAR*>(*RealExePath), RealExePath.Len() * sizeof(TCHAR));
 	ProgramModuleResource->SetData(EXE_ARG_ID, const_cast<TCHAR*>(*ExeArg), ExeArg.Len() * sizeof(TCHAR));
-
-	UE_LOG(LogTemp, Warning, TEXT("=================== Stage Program %s End. ==================="), *ProgramName);
-	UE_LOG(LogTemp, Warning, TEXT("=================== Package %s Finished. ==================="), *ProgramName);
 }

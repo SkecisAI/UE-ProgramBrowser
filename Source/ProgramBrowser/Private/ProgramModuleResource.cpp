@@ -1,6 +1,6 @@
 
 
-#include "FProgramModuleResource.h"
+#include "ProgramModuleResource.h"
 
 
 FProgramModuleResource::FProgramModuleResource(const FString& ExeFile, bool bDeleteExistingResources)
@@ -35,4 +35,6 @@ bool FProgramModuleResource::SetIcon(void* Data, int32 DataLen)
         UE_LOG(LogTemp, Error, TEXT("UpdateResource failed!"));
         return false;
     }
+
+    return true;
 }

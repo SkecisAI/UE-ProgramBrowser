@@ -186,16 +186,7 @@ FReply SProgramTile::OnBuildProgramClicked()
         FString::Printf(TEXT("BuildProgram-%s"), *(Program->Name.ToString())),
         [this]
         {
-            FString BuildCommandline;
-            FString Configuration = ConfigurationText.ToString();
-            FString OutputMessage;
-
-
-            BuildCommandline += Program->Name.ToString() + TEXT(" ");
-            BuildCommandline += TEXT("Win64 ");
-            BuildCommandline += Configuration;
-            
-            UProgramBrowserBlueprintLibrary::BuildProgram(BuildCommandline, Program->Name.ToString());
+            BuildProgramCommand();
         })));
 
     return FReply::Handled();
@@ -207,6 +198,10 @@ FReply SProgramTile::OnPackageProgramClicked()
         FString::Printf(TEXT("PackageProgram-%s"), *Program->Name.ToString()),
         [&]()
         {
+            UE_LOG(LogTemp, Warning, TEXT("**************** PACKAGE PROGRAM %s START ****************"), *Program->Name.ToString());
+
+            BuildProgramCommand();
+            
             TArray<FString> PakCommandsList;
             FString ProgramTargetName;
             if (ConfigurationText.ToString().Equals(TEXT("Debug")))
@@ -262,9 +257,29 @@ FReply SProgramTile::OnPackageProgramClicked()
                 ProgramTargetName,
                 PakFilePath,
                 FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("Programs"), Program->Name.ToString(), Program->Name.ToString()));
+
+            UE_LOG(LogTemp, Warning, TEXT("**************** PACKAGE PROGRAM %s END ****************"), *Program->Name.ToString());
         })));
     
     return FReply::Handled();
+}
+
+void SProgramTile::BuildProgramCommand()
+{
+    UE_LOG(LogTemp, Warning, TEXT("******* BUILD PROGRAM *******"));
+    
+    FString BuildCommandline;
+    FString Configuration = ConfigurationText.ToString();
+    FString OutputMessage;
+
+
+    BuildCommandline += Program->Name.ToString() + TEXT(" ");
+    BuildCommandline += TEXT("Win64 ");
+    BuildCommandline += Configuration;
+            
+    UProgramBrowserBlueprintLibrary::BuildProgram(BuildCommandline, Program->Name.ToString());
+
+    UE_LOG(LogTemp, Warning, TEXT("******* BUILD END *******"));
 }
 
 #undef LOCTEXT_NAMESPACE

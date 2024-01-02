@@ -21,4 +21,4 @@ public:
 
 private:
     HANDLE Handle = nullptr;
-}
+};
