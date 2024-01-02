@@ -47,14 +47,14 @@ void FProgramBrowserModule::ShutdownModule()
 
 void FProgramBrowserModule::InitilizeBrowserData()
 {
+	PluginDir           = IPluginManager::Get().FindPlugin("ProgramBrowser")->GetBaseDir();
+	ProgramTemplatesDir = PluginDir / TEXT("Templates");
+	ProgramsDir         = FPaths::EngineSourceDir() / TEXT("Programs/Programs_Collection");
+
 	if (!FPaths::DirectoryExists(ProgramsDir))
 	{
 		IFileManager::Get().MakeDirectory(*ProgramsDir);
 	}
-
-	PluginDir           = IPluginManager::Get().FindPlugin("ProgramBrowser")->GetBaseDir();
-	ProgramTemplatesDir = PluginDir / TEXT("Templates");
-	ProgramsDir      = FPaths::EngineSourceDir() / TEXT("Programs/Programs_Collection");
 
 	TArray<FString> Files;
 	IFileManager::Get().FindFiles(Files, *(ProgramTemplatesDir / TEXT("*")), false, true);

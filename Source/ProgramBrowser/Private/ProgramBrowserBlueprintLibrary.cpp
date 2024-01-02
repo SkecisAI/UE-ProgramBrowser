@@ -61,7 +61,7 @@ void UProgramBrowserBlueprintLibrary::StageProgram(const FString& ProgramName, c
 	{
 		IFileManager::Get().Copy(*(Dest / Dependency), *FPaths::Combine(FPaths::EngineDir(), TEXT("Binaries\\Win64"), Dependency));
 	}
-	IFileManager::Get().Copy(*FPaths::Combine(StageDir, TEXT("Engine\\Content"), ProgramName + TEXT(".pak")), *ProgramPakFile);
+	IFileManager::Get().Copy(*FPaths::Combine(StageDir, TEXT("Engine\\Content\\Paks"), ProgramName + TEXT(".pak")), *ProgramPakFile);
 
 	UE_LOG(LogTemp, Warning, TEXT("=================== Stage Program %s End. ==================="), *ProgramName);
 	UE_LOG(LogTemp, Warning, TEXT("=================== Package %s Finished. ==================="), *ProgramName);
