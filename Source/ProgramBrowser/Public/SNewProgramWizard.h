@@ -25,7 +25,7 @@ public:
 
 	TSharedRef<ITableRow> OnGenerateTemplateRow(TSharedRef<FNewProgramTemplate> NewProgramTemplate, const TSharedRef<STableViewBase>& TableViewBase);
 
-	void OnSelectedTemplate(TSharedPtr<FNewProgramTemplate> NewProgramTemplate, ESearchInfo::Type Arg);
+	void OnSelectedTemplate(TSharedPtr<FNewProgramTemplate> NewProgramTemplate, ESelectInfo::Type Arg);
 
 	void OnProgramNameChanged(const FText& Text);
 

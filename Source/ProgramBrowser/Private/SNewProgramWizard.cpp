@@ -3,10 +3,11 @@
 
 #include "SNewProgramWizard.h"
 
+#include "ProgramBrowser.h"
+#include "ProgramBrowserBlueprintLibrary.h"
 #include "SlateOptMacros.h"
 #include "SPrimaryButton.h"
 #include "ProgramData.h"
-#include "Interfaces/IPluginManager.h"
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
@@ -14,15 +15,6 @@ BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
 void SNewProgramWizard::Construct(const FArguments& InArgs, const TArray<TSharedRef<FNewProgramTemplate>>& InTemplates)
 {
-	// NewProgramTemplates.Add(MakeShareable(new FNewProgramTemplate(
-	// 	FName("Blank"), 
-	// 	FString("A blank program with console."),
-	// 	IPluginManager::Get().FindPlugin("ProgramBrowser")->GetBaseDir() / TEXT("Resources/terminal.png"))));
-	// NewProgramTemplates.Add(MakeShareable(new FNewProgramTemplate(
-	// 	FName("Slate Window"), 
-	// 	FString("A program with slate UI."),
-	// 	IPluginManager::Get().FindPlugin("ProgramBrowser")->GetBaseDir() / TEXT("Resources/window.png"))));
-
 	NewProgramTemplates = InTemplates;
 	
 	TemplateListView = SNew(SListView<TSharedRef<FNewProgramTemplate>>)
@@ -63,7 +55,7 @@ void SNewProgramWizard::Construct(const FArguments& InArgs, const TArray<TShared
 		.AutoWidth()
 		[
 			SNew(SBox)
-			.MinDesireWidth(100.0f)
+			.MinDesiredWidth(100.0f)
 			.HeightOverride(30)
 			[
 				SAssignNew(ProgramNameTextBox, SEditableTextBox)
@@ -157,11 +149,11 @@ void SNewProgramWizard::OnSelectedTemplate(TSharedPtr<FNewProgramTemplate> NewPr
 
 void SNewProgramWizard::OnProgramNameChanged(const FText& Text)
 {
-	bool ValidPath = true;
+	bool bValidPath = true;
 	FString NewProgramPath = FPaths::ConvertRelativePathToFull(FPaths::Combine(FProgramBrowserModule::ProgramsDir, Text.ToString()));
 	FText PathError;
 
-	if (!FPaths::ValidatePath(ProgramPath, &PathError))
+	if (!FPaths::ValidatePath(NewProgramPath, &PathError))
 	{
 		bValidPath = false;
 	}

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "Misc/FileHelper.h"
 #include "ProgramBrowserBlueprintLibrary.generated.h"
 
 /**
@@ -110,36 +111,28 @@ namespace ProgramUtils
 					{
 						return false;
 					}
+					
+					FileContent = FileContent.Replace(*PROGRAM_NAME, *ProgramName, ESearchCase::CaseSensitive);
+
+					FString ProgramNameAPI = ProgramName + TEXT("_API");
+					FileContent = FileContent.Replace(*ProgramNameAPI, *ProgramNameAPI.ToUpper(), ESearchCase::CaseSensitive);
+
+					if (!FFileHelper::SaveStringToFile(FileContent, *NewName))
+					{
+						return false;
+					}
 				}
-
-				FileContent = FileContent.Replace(*PROGRAM_NAME, *ProgramName, ESearchCase::CaseSensitive);
-
-				FString ProgramNameAPI = ProgramName + TEXT("_API");
-				FileContent = FileContent.Replace(*ProgramNameAPI, *ProgramNameAPI.ToUpper(), ESearchCase::CaseSensitive);
-
-				if (!FFileHelper::SaveStringToFile(FileContent, *NewName))
+				else
 				{
-					return false;
+					if (!PlatformFile.CopyFile(*NewName, FilenameOrDirectory))
+					{
+						return false;
+					}
 				}
-			}
-			else
-			{
-				if (!PlatformFile.CopyFile(*NewName, FilenameOrDirectory))
-				{
-					return false;
-				}
+
 			}
 			
 			return true;
 		}
 	};
-	
-	FCopyProgramFileAndDirs : public IPlatformFile::FDirectoryVisitor::FCopyProgramFileAndDirs : public IPlatformFile::FDirectoryVisitor(/* args */)
-	{
-	}
-	
-	FCopyProgramFileAndDirs : public IPlatformFile::FDirectoryVisitor::~FCopyProgramFileAndDirs : public IPlatformFile::FDirectoryVisitor()
-	{
-	}
-	
 }
