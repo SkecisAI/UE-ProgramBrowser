@@ -13,17 +13,10 @@ BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
 #define LOCTEXT_NAMESPACE "ProgramEditor"
 
-void SProgramBrowser::Construct(const FArguments& InArgs, const TArray<TSharedRef<FProgram>>& InPrograms)
+
+void SProgramBrowser::Construct(const FArguments& InArgs)
 {
-    // for (TCHAR Letter = 'A'; Letter <= 'Z'; ++Letter)
-    // {
-    //     Programs.Add(MakeShareable(new FProgram{
-    //     	FString(FTCHARToUTF8(&Letter)),
-    //     	TEXT("test"),
-    //     	TEXT("ABC"),
-    //     	TEXT("1.0")}));
-    // }
-    Programs = InPrograms;
+    InitilizeProgramsData();
 
     TSharedRef<SBorder> MainContent = SNew(SBorder)
     .BorderImage(FAppStyle::Get().GetBrush("Brushes.Panel"))
@@ -102,6 +95,21 @@ FReply SProgramBrowser::OnCreateProgramClicked()
     FGlobalTabmanager::Get()->TryInvokeTab(FProgramBrowserModule::ProgramBrowserCreatorTabName);
 
     return FReply::Handled();
+}
+
+void SProgramBrowser::InitilizeProgramsData()
+{
+    TArray<FString> Files;
+    IFileManager::Get().FindFiles(Files, *(FProgramBrowserModule::ProgramsDir / TEXT("*")), false, true);
+    for (const FString& File : Files)
+    {
+        Programs.Add(MakeShareable(new FProgram(
+            File,
+            "",
+            "",
+            "1.0"
+            )));
+    }
 }
 
 #undef LOCTEXT_NAMESPACE

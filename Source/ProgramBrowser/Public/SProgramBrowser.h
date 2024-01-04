@@ -17,14 +17,18 @@ public:
         {}
     SLATE_END_ARGS()
 
-    void Construct(const FArguments& InArgs, const TArray<TSharedRef<FProgram>>& InPrograms);
+    void Construct(const FArguments& InArgs);
+    
     const TArray<TSharedRef<FProgram>>& GetPrograms() {return Programs;}
 
     FReply OnCreateProgramClicked();
 
 private:
     TSharedPtr<SProgramTileList> ProgramTileList;
+    
     TSharedPtr<SProgramSimpleList> ProgramSimpleList;
 
     TArray<TSharedRef<FProgram>> Programs;
+
+    void InitilizeProgramsData();
 };

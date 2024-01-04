@@ -13,9 +13,9 @@ BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
 #define LOCTEXT_NAMESPACE "NewProgramWizard"
 
-void SNewProgramWizard::Construct(const FArguments& InArgs, const TArray<TSharedRef<FNewProgramTemplate>>& InTemplates)
+void SNewProgramWizard::Construct(const FArguments& InArgs)
 {
-	NewProgramTemplates = InTemplates;
+	InitilizeProgramTemplatesData();
 	
 	TemplateListView = SNew(SListView<TSharedRef<FNewProgramTemplate>>)
 		.ListItemsSource(&NewProgramTemplates)
@@ -117,19 +117,22 @@ TSharedRef<ITableRow> SNewProgramWizard::OnGenerateTemplateRow(TSharedRef<FNewPr
 
 				+ SHorizontalBox::Slot()
 				.AutoWidth()
+				.Padding(FMargin(10, 0, 0, 0))
 				[
 					SNew(SVerticalBox)
 
 					+ SVerticalBox::Slot()
 					[
 						SNew(STextBlock)
+						.Font(FCoreStyle::GetDefaultFontStyle("Blod", 20))
 						.Text(FText::FromName(NewProgramTemplate->Name))
 					]
 
 					+ SVerticalBox::Slot()
 					[
 						SNew(STextBlock)
-						.Text(FText::FromString(NewProgramTemplate->Path))
+						.Font(FCoreStyle::GetDefaultFontStyle("Italic", 10))
+						.Text(FText::FromString(NewProgramTemplate->Desc))
 					]
 				]
 			]
@@ -184,6 +187,23 @@ FReply SNewProgramWizard::OnCreateNewProgramClicked()
 	PlatformFile.IterateDirectoryRecursively(*SelectedTemplate->Path, CopyProgramFileAndDirs);
 
 	return FReply::Handled();
+}
+
+void SNewProgramWizard::InitilizeProgramTemplatesData()
+{
+	TArray<FString> Files;
+	IFileManager::Get().FindFiles(Files, *(FProgramBrowserModule::ProgramTemplatesDir / TEXT("*")), false, true);
+	for (const FString& File : Files)
+	{
+		FString Desc = TEXT("...");
+		FFileHelper::LoadFileToString(Desc, *(FProgramBrowserModule::ProgramTemplatesDir / File / TEXT("Resources/Desc.txt")));
+		
+		NewProgramTemplates.Add(MakeShareable(new FNewProgramTemplate(
+			FName(File),
+			FProgramBrowserModule::ProgramTemplatesDir / File,
+			Desc,
+			FProgramBrowserModule::ProgramTemplatesDir / File / TEXT("Resources/Icon.png"))));
+	}
 }
 
 #undef LOCTEXT_NAMESPACE

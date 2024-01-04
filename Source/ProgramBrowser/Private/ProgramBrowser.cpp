@@ -16,8 +16,9 @@
 
 const FName FProgramBrowserModule::ProgramBrowserEditorTabName = TEXT("ProgramsEditor");
 const FName FProgramBrowserModule::ProgramBrowserCreatorTabName = TEXT("ProgramCreator");
-FString FProgramBrowserModule::ProgramsDir;
+
 FString FProgramBrowserModule::PluginDir;
+FString FProgramBrowserModule::ProgramsDir;
 FString FProgramBrowserModule::ProgramTemplatesDir;
 
 void FProgramBrowserModule::StartupModule()
@@ -43,6 +44,8 @@ void FProgramBrowserModule::ShutdownModule()
 {
 	// This function may be called during shutdown to clean up your module.  For modules that support dynamic reloading,
 	// we call this function before unloading the module.
+	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(ProgramBrowserEditorTabName);
+	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(ProgramBrowserCreatorTabName);
 }
 
 void FProgramBrowserModule::InitilizeBrowserData()
@@ -50,32 +53,10 @@ void FProgramBrowserModule::InitilizeBrowserData()
 	PluginDir           = IPluginManager::Get().FindPlugin("ProgramBrowser")->GetBaseDir();
 	ProgramTemplatesDir = PluginDir / TEXT("Templates");
 	ProgramsDir         = FPaths::EngineSourceDir() / TEXT("Programs/Programs_Collection");
-
+	
 	if (!FPaths::DirectoryExists(ProgramsDir))
 	{
 		IFileManager::Get().MakeDirectory(*ProgramsDir);
-	}
-
-	TArray<FString> Files;
-	IFileManager::Get().FindFiles(Files, *(ProgramTemplatesDir / TEXT("*")), false, true);
-	for (const FString& File : Files)
-	{
-		ProgramTemplates.Add(MakeShareable(new FNewProgramTemplate(
-			FName(File),
-			ProgramTemplatesDir / File,
-			ProgramTemplatesDir / File / TEXT("Resources/Icon.png"))));
-	}
-
-	Files.Empty();
-	IFileManager::Get().FindFiles(Files, *(ProgramsDir / TEXT("*")), false, true);
-	for (const FString& File : Files)
-	{
-		Programs.Add(MakeShareable(new FProgram(
-			File,
-			"",
-			"",
-			"1.0"
-			)));
 	}
 }
 
@@ -85,7 +66,7 @@ TSharedRef<SDockTab> FProgramBrowserModule::HandleSpawnProgramBrowserTab(const F
 		.TabRole(ETabRole::NomadTab)
 		.Content()
 		[
-			SNew(SProgramBrowser, Programs)
+			SNew(SProgramBrowser)
 		];
 	return DockTab;
 }
@@ -96,7 +77,7 @@ TSharedRef<SDockTab> FProgramBrowserModule::HandleSpawnProgramCreatorTab(const F
 	.TabRole(ETabRole::NomadTab)
 	.Content()
 	[
-		SNew(SNewProgramWizard, ProgramTemplates)
+		SNew(SNewProgramWizard)
 	];
 	return DockTab;
 }

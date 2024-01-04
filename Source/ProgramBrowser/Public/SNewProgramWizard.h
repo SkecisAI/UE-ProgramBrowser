@@ -21,7 +21,7 @@ public:
 	SLATE_END_ARGS()
 
 	/** Constructs this widget with InArgs */
-	void Construct(const FArguments& InArgs, const TArray<TSharedRef<FNewProgramTemplate>>& InTemplates);
+	void Construct(const FArguments& InArgs);
 
 	TSharedRef<ITableRow> OnGenerateTemplateRow(TSharedRef<FNewProgramTemplate> NewProgramTemplate, const TSharedRef<STableViewBase>& TableViewBase);
 
@@ -41,4 +41,6 @@ private:
 	TSharedPtr<FNewProgramTemplate> SelectedTemplate;
 
 	TSharedPtr<SEditableTextBox> ProgramNameTextBox;
+
+	void InitilizeProgramTemplatesData();
 };

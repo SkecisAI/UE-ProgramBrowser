@@ -25,14 +25,16 @@ struct FNewProgramTemplate
 {
 	FName Name;
 	FString Path;
+	FString Desc;
 	FString IconPath;
 
 	TSharedPtr<FSlateDynamicImageBrush> IconBrush;
 
-	FNewProgramTemplate(const FName& InName, const FString& InPath, const FString& InIconPath)
+	FNewProgramTemplate(const FName& InName, const FString& InPath, const FString& InDesc, const FString& InIconPath)
 		:
 	Name(InName),
 	Path(InPath),
+	Desc(InDesc),
 	IconPath(InIconPath)
 	{
 		IconBrush = MakeShareable(new FSlateDynamicImageBrush(FName(*IconPath), FVector2D(128, 128)));

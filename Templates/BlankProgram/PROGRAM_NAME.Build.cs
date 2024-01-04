@@ -12,5 +12,6 @@ public class PROGRAM_NAME : ModuleRules
 
 		PrivateDependencyModuleNames.Add("Core");
 		PrivateDependencyModuleNames.Add("Projects");
+		PrivateDependencyModuleNames.Add("PakFile");
 	}
 }
