@@ -25,8 +25,20 @@ public:
 
 	TSharedRef<ITableRow> OnGenerateTemplateRow(TSharedRef<FNewProgramTemplate> NewProgramTemplate, const TSharedRef<STableViewBase>& TableViewBase);
 
+	void OnSelectedTemplate(TSharedPtr<FNewProgramTemplate> NewProgramTemplate, ESearchInfo::Type Arg);
+
+	void OnProgramNameChanged(const FText& Text);
+
+	bool IsCreateProgramEnabled() const;
+
+	FReply OnCreateNewProgramClicked();
+
 private:
 	TSharedPtr<SListView<TSharedRef<FNewProgramTemplate>>> TemplateListView;
 
 	TArray<TSharedRef<FNewProgramTemplate>> NewProgramTemplates;
+
+	TSharedPtr<FNewProgramTemplate> SelectedTemplate;
+
+	TSharedPtr<SEditableTextBox> ProgramNameTextBox;
 };

@@ -27,7 +27,8 @@ void SNewProgramWizard::Construct(const FArguments& InArgs, const TArray<TShared
 	
 	TemplateListView = SNew(SListView<TSharedRef<FNewProgramTemplate>>)
 		.ListItemsSource(&NewProgramTemplates)
-		.OnGenerateRow(this, &SNewProgramWizard::OnGenerateTemplateRow);
+		.OnGenerateRow(this, &SNewProgramWizard::OnGenerateTemplateRow)
+		.OnSelectionChanged(this, &SNewProgramWizard::OnSelectedTemplate);
 	
 	TSharedRef<SVerticalBox> MainContent = SNew(SVerticalBox)
 	+ SVerticalBox::Slot()
@@ -53,12 +54,35 @@ void SNewProgramWizard::Construct(const FArguments& InArgs, const TArray<TShared
 	]
 
 	+ SVerticalBox::Slot()
+	.AutoHeight()
+	.HAlign(HAlign_Center)
+	[
+		SNew(SHorizontalBox)
+
+		+ SHorizontalBox::Slot()
+		.AutoWidth()
+		[
+			SNew(SBox)
+			.MinDesireWidth(100.0f)
+			.HeightOverride(30)
+			[
+				SAssignNew(ProgramNameTextBox, SEditableTextBox)
+				.Font(FCoreStyle::GetDefaultFontStyle("Regular", 12))
+				.HintText(LOCTEXT("CreateProgramText", "Program Name..."))
+				.OnTextChanged(this, &SNewProgramWizard::OnProgramNameChanged)
+			]
+		]
+	]
+
+	+ SVerticalBox::Slot()
 	.HAlign(HAlign_Right)
 	.Padding(10.0f)
 	.AutoHeight()
 	[
 		SNew(SPrimaryButton)
 		.Text(LOCTEXT("CreateProgramText", "Create Program"))
+		.IsEnabled(this, &SNewProgramWizard::IsCreateProgramEnabled)
+		.OnClicked(this, &SNewProgramWizard::OnCreateNewProgramClicked)
 	];
 	
 	ChildSlot
@@ -121,6 +145,54 @@ TSharedRef<ITableRow> SNewProgramWizard::OnGenerateTemplateRow(TSharedRef<FNewPr
 	];
 }
 
+void SNewProgramWizard::OnSelectedTemplate(TSharedPtr<FNewProgramTemplate> NewProgramTemplate, ESelectInfo::Type Arg)
+{
+	SelectedTemplate = nullptr;
+	if (!TemplateListView.IsValid()) return;
+	if (TemplateListView->GetSelectedItems().Num() > 0)
+	{
+		SelectedTemplate = TemplateListView->GetSelectedItems()[0];
+	}
+}
+
+void SNewProgramWizard::OnProgramNameChanged(const FText& Text)
+{
+	bool ValidPath = true;
+	FString NewProgramPath = FPaths::ConvertRelativePathToFull(FPaths::Combine(FProgramBrowserModule::ProgramsDir, Text.ToString()));
+	FText PathError;
+
+	if (!FPaths::ValidatePath(ProgramPath, &PathError))
+	{
+		bValidPath = false;
+	}
+
+	if (bValidPath) return;
+
+	ProgramNameTextBox->SetError(PathError);
+}
+
+bool SNewProgramWizard::IsCreateProgramEnabled() const
+{
+	return SelectedTemplate.IsValid() && !ProgramNameTextBox->GetText().ToString().IsEmpty();
+}
+
+FReply SNewProgramWizard::OnCreateNewProgramClicked()
+{
+	FText ProgramNameText = ProgramNameTextBox->GetText();
+	if (!ProgramNameText.ToString().Len())
+	{
+		UE_LOG(LogTemp, Error, TEXT("Program name is empty!"));
+		return FReply::Handled();
+	}
+
+	FString NewProgramPath = FPaths::Combine(FProgramBrowserModule::ProgramsDir, ProgramNameText.ToString());
+
+	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
+	ProgramUtils::FCopyProgramFileAndDirs CopyProgramFileAndDirs(PlatformFile, SelectedTemplate->Path, NewProgramPath, ProgramNameText.ToString());
+	PlatformFile.IterateDirectoryRecursively(*SelectedTemplate->Path, CopyProgramFileAndDirs);
+
+	return FReply::Handled();
+}
 
 #undef LOCTEXT_NAMESPACE
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION
