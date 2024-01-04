@@ -58,3 +58,88 @@ private:
 
 	FRunnableThread* Thread;
 };
+
+namespace ProgramUtils
+{
+	const FString PROGRAM_NAME = TEXT("PROGRAM_NAME");
+	class FCopyProgramFileAndDirs : public IPlatformFile::FDirectoryVisitor
+	{
+	private:
+		IPlatformFile& PlatformFile;
+		const FString SourceRoot;
+		const FString DestRoot;
+		const FString& ProgramName;
+		TArray<FString> NameReplacementFileTypes;
+		TArray<FString> IgnoreFileTypes;
+	public:
+		FCopyProgramFileAndDirs(IPlatformFile& InPlatforFile, const FString& InSourceRoot, const FString& InDestRoot,
+			const FString& InProgramName)
+			: PlatformFile(InPlatforFile)
+			, SourceRoot(InSourceRoot)
+			, DestRoot(InDestRoot)
+			, ProgramName(InProgramName)
+		{
+			NameReplacementFileTypes.Add(TEXT("cs"));
+			NameReplacementFileTypes.Add(TEXT("cpp"));
+			NameReplacementFileTypes.Add(TEXT("h"));
+			NameReplacementFileTypes.Add(TEXT("vcxproj"));
+		}
+
+		virtual bool Visit(const TCHAR* FilenameOrDirectory, bool bIsDirectory) override
+		{
+			FString NewName(FilenameOrDirectory);
+			NewName.RemoveFromStart(SourceRoot);
+			NewName = NewName.Replace(*PROGRAM_NAME, *ProgramName, ESearchCase::CaseSensitive);
+			NewName = FPaths::Combine(DestRoot, *NewName);
+
+			if (bIsDirectory)
+			{
+				if (!PlatformFile.CreateDirectoryTree(*NewName) && !PlatformFile.DirectoryExists(*NewName))
+				{
+					return false;
+				}
+			}
+			else
+			{
+				FString Ext = FPaths::GetExtension(FilenameOrDirectory);
+
+				if (NameReplacementFileTypes.Contains(Ext))
+				{
+					FString FileContent;
+					if (!FFileHelper::LoadFileToString(FileContent, FilenameOrDirectory))
+					{
+						return false;
+					}
+				}
+
+				FileContent = FileContent.Replace(*PROGRAM_NAME, *ProgramName, ESearchCase::CaseSensitive);
+
+				FString ProgramNameAPI = ProgramName + TEXT("_API");
+				FileContent = FileContent.Replace(*ProgramNameAPI, *ProgramNameAPI.ToUpper(), ESearchCase::CaseSensitive);
+
+				if (!FFileHelper::SaveStringToFile(FileContent, *NewName))
+				{
+					return false;
+				}
+			}
+			else
+			{
+				if (!PlatformFile.CopyFile(*NewName, FilenameOrDirectory))
+				{
+					return false;
+				}
+			}
+			
+			return true;
+		}
+	};
+	
+	FCopyProgramFileAndDirs : public IPlatformFile::FDirectoryVisitor::FCopyProgramFileAndDirs : public IPlatformFile::FDirectoryVisitor(/* args */)
+	{
+	}
+	
+	FCopyProgramFileAndDirs : public IPlatformFile::FDirectoryVisitor::~FCopyProgramFileAndDirs : public IPlatformFile::FDirectoryVisitor()
+	{
+	}
+	
+}
