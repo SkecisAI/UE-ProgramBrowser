@@ -25,13 +25,13 @@
 
 # 说明
 
-- 可浏览的Program**需要**放在 `\Engine\Source\Program\Programs_Collection`下
+- 可浏览的Program**需要**放在 `\Engine\Source\Programs\Programs_Collection`下
 - 打包后的Program放在项目路径下的`\Saved\Programs`下
 - **只适用**于源码版引擎（安装版还在研究中）
 - 目前仅支持Windows 64位
 - 功能还有许多欠缺，还需完善...
 
-（此插件本人觉得还可以可以做成Standalone Program而独立于UE编辑器，套娃）
+（此插件本人觉得也可以做成Standalone Program而独立于UE编辑器，套娃）
 
 # 参考资料
 
