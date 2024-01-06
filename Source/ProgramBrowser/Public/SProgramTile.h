@@ -32,7 +32,9 @@ public:
 
     FReply OnPackageProgramClicked();
 
-    void BuildProgramCommand();
+    bool BuildProgramCommand();
+
+    bool PackageProgramCommand();
     
 private:
     TSharedPtr<FProgram> Program;
@@ -43,5 +45,8 @@ private:
 
     TSharedPtr<STextBlock> ContentWidget;
 
-    TArray<TSharedPtr<FProgramBrowserWorker>> BuildWorkers;
+    TArray<TSharedPtr<FProgramBrowserWorker>> ProcWorkers;
+
+    TSharedPtr<SNotificationItem> BuildNotification;
+    TSharedPtr<SNotificationItem> PackageNotification;
 };

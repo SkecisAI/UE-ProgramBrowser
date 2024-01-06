@@ -8,8 +8,11 @@
 #include "SPrimaryButton.h"
 #include "ProgramData.h"
 #include "TargetReceipt.h"
+#include "Async/Async.h"
+#include "Framework/Notifications/NotificationManager.h"
 #include "Interfaces/IPluginManager.h"
 #include "Misc/FileHelper.h"
+#include "Widgets/Notifications/SNotificationList.h"
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
@@ -17,7 +20,7 @@ BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
 SProgramTile::~SProgramTile()
 {
-    for (TSharedPtr<FProgramBrowserWorker>& Worker : BuildWorkers)
+    for (TSharedPtr<FProgramBrowserWorker>& Worker : ProcWorkers)
     {
         if (Worker.IsValid())
         {
@@ -182,11 +185,34 @@ FText SProgramTile::GetConfigText() const
 
 FReply SProgramTile::OnBuildProgramClicked()
 {
-    BuildWorkers.Add(MakeShareable(new FProgramBrowserWorker(
+    FNotificationInfo Info(FText::FromString(FString::Printf(TEXT("Building %s..."), *Program->Name.ToString())));
+    Info.ExpireDuration = 5.0f;
+    Info.bUseThrobber = true;
+    BuildNotification = FSlateNotificationManager::Get().AddNotification(Info);
+    BuildNotification->SetCompletionState(SNotificationItem::CS_Pending);
+    
+    ProcWorkers.Add(MakeShareable(new FProgramBrowserWorker(
         FString::Printf(TEXT("BuildProgram-%s"), *(Program->Name.ToString())),
         [this]
         {
-            BuildProgramCommand();
+            bool bBuildRes = BuildProgramCommand();
+
+            AsyncTask(ENamedThreads::GameThread, [this, bBuildRes]()
+            {
+                if (!BuildNotification.IsValid()) return;
+                
+                if (bBuildRes)
+                {
+                    BuildNotification->SetCompletionState(SNotificationItem::CS_Success);
+                }
+                else
+                {
+                    BuildNotification->SetCompletionState(SNotificationItem::CS_Fail);
+                }
+
+                BuildNotification->ExpireAndFadeout();
+                BuildNotification.Reset();
+            });
         })));
 
     return FReply::Handled();
@@ -194,80 +220,43 @@ FReply SProgramTile::OnBuildProgramClicked()
 
 FReply SProgramTile::OnPackageProgramClicked()
 {
-    BuildWorkers.Add(MakeShareable(new FProgramBrowserWorker(
+    FNotificationInfo Info(FText::FromString(FString::Printf(TEXT("Packaging %s..."), *Program->Name.ToString())));
+    Info.ExpireDuration = 5.0f;
+    Info.bUseThrobber = true;
+    PackageNotification = FSlateNotificationManager::Get().AddNotification(Info);
+    PackageNotification->SetCompletionState(SNotificationItem::CS_Pending);
+    
+    ProcWorkers.Add(MakeShareable(new FProgramBrowserWorker(
         FString::Printf(TEXT("PackageProgram-%s"), *Program->Name.ToString()),
         [&]()
         {
-            UE_LOG(LogTemp, Warning, TEXT("**************** PACKAGE PROGRAM %s START ****************"), *Program->Name.ToString());
-
-            BuildProgramCommand();
+            UE_LOG(LogTemp, Display, TEXT("**************** PACKAGE PROGRAM %s START ****************"), *Program->Name.ToString());
+            bool bPackageRes = PackageProgramCommand();
+            UE_LOG(LogTemp, Display, TEXT("**************** PACKAGE PROGRAM %s END ****************"), *Program->Name.ToString());
             
-            TArray<FString> PakCommandsList;
-            FString ProgramTargetName;
-            if (ConfigurationText.ToString().Equals(TEXT("Debug")))
+            AsyncTask(ENamedThreads::GameThread, [this, bPackageRes]()
             {
-                ProgramTargetName = Program->Name.ToString() + TEXT("-Win64-Debug");
-            }
-            else if (ConfigurationText.ToString().Equals(TEXT("Shipping")))
-            {
-                ProgramTargetName = Program->Name.ToString() + TEXT("-Win64-Shipping");
-            }
-            else
-            {
-                ProgramTargetName = Program->Name.ToString();
-            }
-
-            FString ReceiptPath = FPaths::Combine(FPaths::EngineDir(), TEXT("Binaries\\Win64"), ProgramTargetName + TEXT(".target"));
-            FTargetReceipt Receipt;
-            if(!Receipt.Read(ReceiptPath))
-            {
-                UE_LOG(LogTemp, Error, TEXT("Program %s target not existed."), *Program->Name.ToString())
-                return;
-            }
-
-            for (const FRuntimeDependency& Dependency : Receipt.RuntimeDependencies)
-            {
-                FString DependencyRelPath = Dependency.Path;
-                PakCommandsList.Add(FString::Printf(TEXT("\"%s\" \"%s\" -compress"), *FPaths::ConvertRelativePathToFull(DependencyRelPath), *DependencyRelPath));
-            }
-
-            TArray<FString> AdditionalDependicesFiles;
-            UProgramBrowserBlueprintLibrary::GetProgramAdditionalDependenciesDirs(AdditionalDependicesFiles);
-            for (const FString& Dir : AdditionalDependicesFiles)
-            {
-                TArray<FString> AdditionalFiles;
-                IFileManager::Get().FindFilesRecursive(AdditionalFiles, *Dir, TEXT("*.*"), true, false, false);
-                for (FString& Filepath : AdditionalFiles)
+                if (bPackageRes)
                 {
-                    PakCommandsList.Add(FString::Printf(TEXT("\"%s\" \"%s\" -compress"), *FPaths::ConvertRelativePathToFull(Filepath), *Filepath));
+                    
+                    PackageNotification->SetCompletionState(SNotificationItem::CS_Success);
                 }
-            }
+                else
+                {
+                    PackageNotification->SetCompletionState(SNotificationItem::CS_Fail);
+                }
+                
+                PackageNotification->ExpireAndFadeout();
+                PackageNotification.Reset();
 
-    
-            FString PakFilePath = FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("Programs"), Program->Name.ToString()) / Program->Name.ToString() + TEXT(".pak");
-            FString PakCommandsFile = FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("Programs"), Program->Name.ToString()) / TEXT("PakCommandList.txt");
-            FFileHelper::SaveStringArrayToFile(PakCommandsList, *PakCommandsFile);
-            
-            FString UnrealPakCMD = FString::Printf(TEXT("\"%s\" -create=\"%s\" -compressionformats=Oodle"), *PakFilePath, *PakCommandsFile);
-
-            ExecuteUnrealPak(*UnrealPakCMD);
-
-            UProgramBrowserBlueprintLibrary::StageProgram(
-                Program->Name.ToString(),
-                ProgramTargetName,
-                PakFilePath,
-                FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("Programs"), Program->Name.ToString(), Program->Name.ToString()));
-
-            UE_LOG(LogTemp, Warning, TEXT("**************** PACKAGE PROGRAM %s END ****************"), *Program->Name.ToString());
+            });
         })));
     
     return FReply::Handled();
 }
 
-void SProgramTile::BuildProgramCommand()
+bool SProgramTile::BuildProgramCommand()
 {
-    UE_LOG(LogTemp, Warning, TEXT("******* BUILD PROGRAM *******"));
-    
     FString BuildCommandline;
     FString Configuration = ConfigurationText.ToString();
     FString OutputMessage;
@@ -277,9 +266,83 @@ void SProgramTile::BuildProgramCommand()
     BuildCommandline += TEXT("Win64 ");
     BuildCommandline += Configuration;
             
-    UProgramBrowserBlueprintLibrary::BuildProgram(BuildCommandline, Program->Name.ToString());
+    return UProgramBrowserBlueprintLibrary::BuildProgram(BuildCommandline, Program->Name.ToString());
+}
 
-    UE_LOG(LogTemp, Warning, TEXT("******* BUILD END *******"));
+bool SProgramTile::PackageProgramCommand()
+{
+    if (!BuildProgramCommand())
+    {
+        UE_LOG(LogTemp, Error, TEXT("Package program %s failed: building failed"), *Program->Name.ToString());
+        return false;
+    }
+    
+    TArray<FString> PakCommandsList;
+    FString ProgramTargetName;
+    if (ConfigurationText.ToString().Equals(TEXT("Debug")))
+    {
+        ProgramTargetName = Program->Name.ToString() + TEXT("-Win64-Debug");
+    }
+    else if (ConfigurationText.ToString().Equals(TEXT("Shipping")))
+    {
+        ProgramTargetName = Program->Name.ToString() + TEXT("-Win64-Shipping");
+    }
+    else
+    {
+        ProgramTargetName = Program->Name.ToString();
+    }
+
+    FString ReceiptPath = FPaths::Combine(FPaths::EngineDir(), TEXT("Binaries\\Win64"), ProgramTargetName + TEXT(".target"));
+    FTargetReceipt Receipt;
+    if(!Receipt.Read(ReceiptPath))
+    {
+        UE_LOG(LogTemp, Error, TEXT("Package program %s failed: target not existed."), *Program->Name.ToString());
+        return false;
+    }
+
+    for (const FRuntimeDependency& Dependency : Receipt.RuntimeDependencies)
+    {
+        FString DependencyRelPath = Dependency.Path;
+        PakCommandsList.Add(FString::Printf(TEXT("\"%s\" \"%s\" -compress"), *FPaths::ConvertRelativePathToFull(DependencyRelPath), *DependencyRelPath));
+    }
+
+    TArray<FString> AdditionalDependicesFiles;
+    UProgramBrowserBlueprintLibrary::GetProgramAdditionalDependenciesDirs(AdditionalDependicesFiles);
+    for (const FString& Dir : AdditionalDependicesFiles)
+    {
+        TArray<FString> AdditionalFiles;
+        IFileManager::Get().FindFilesRecursive(AdditionalFiles, *Dir, TEXT("*.*"), true, false, false);
+        for (FString& Filepath : AdditionalFiles)
+        {
+            PakCommandsList.Add(FString::Printf(TEXT("\"%s\" \"%s\" -compress"), *FPaths::ConvertRelativePathToFull(Filepath), *Filepath));
+        }
+    }
+
+
+    FString PakFilePath = FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("Programs"), Program->Name.ToString()) / Program->Name.ToString() + TEXT(".pak");
+    FString PakCommandsFile = FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("Programs"), Program->Name.ToString()) / TEXT("PakCommandList.txt");
+
+    if (!FFileHelper::SaveStringArrayToFile(PakCommandsList, *PakCommandsFile))
+    {
+        UE_LOG(LogTemp, Error, TEXT("Package program %s failed: save pak command file failed."), *Program->Name.ToString());
+        return false;
+    }
+    
+    FString UnrealPakCMD = FString::Printf(TEXT("\"%s\" -create=\"%s\" -compressionformats=Oodle"), *PakFilePath, *PakCommandsFile);
+
+    if (!ExecuteUnrealPak(*UnrealPakCMD))
+    {
+        UE_LOG(LogTemp, Error, TEXT("Package program %s failed: execute UnrealPak failed."), *Program->Name.ToString());
+        return false;
+    }
+
+    UProgramBrowserBlueprintLibrary::StageProgram(
+        Program->Name.ToString(),
+        ProgramTargetName,
+        PakFilePath,
+        FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("Programs"), Program->Name.ToString(), Program->Name.ToString()));
+
+    return true;
 }
 
 #undef LOCTEXT_NAMESPACE
