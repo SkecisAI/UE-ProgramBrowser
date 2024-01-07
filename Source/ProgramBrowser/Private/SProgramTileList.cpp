@@ -29,7 +29,7 @@ TSharedRef<ITableRow> SProgramTileList::ProgramTileList_OnGenerateRow(TSharedRef
 {
     return SNew(STableRow<TSharedRef<FProgram>>, TableViewBase)
     [
-        SNew(SProgramTile, Program)
+        SNew(SProgramTile, Program, SharedThis(this))
     ];
 }
 

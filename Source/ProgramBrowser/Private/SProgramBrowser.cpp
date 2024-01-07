@@ -8,15 +8,23 @@
 #include "SProgramTileList.h"
 #include "Widgets/Input/SSearchBox.h"
 #include "ProgramData.h"
+#include "Misc/FileHelper.h"
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
 #define LOCTEXT_NAMESPACE "ProgramEditor"
 
+void ProgramItemToString(const FProgram* Program, TArray<FString>& OutFilterString)
+{
+    OutFilterString.Add(Program->Name.ToString());
+}
+
 
 void SProgramBrowser::Construct(const FArguments& InArgs)
 {
     InitilizeProgramsData();
+
+    ProgramTextFilter = MakeShareable(new FProgramFilter(FProgramFilter::FItemToStringArray::CreateStatic(&ProgramItemToString)));
 
     TSharedRef<SBorder> MainContent = SNew(SBorder)
     .BorderImage(FAppStyle::Get().GetBrush("Brushes.Panel"))
@@ -47,8 +55,8 @@ void SProgramBrowser::Construct(const FArguments& InArgs)
                         SNew(SImage)
                         .Image(FAppStyle::Get().GetBrush("Icons.Plus"))
                     ]
+                    
                     + SHorizontalBox::Slot()
-
                     .VAlign(VAlign_Center)
                     .AutoWidth()
                     [
@@ -63,6 +71,7 @@ void SProgramBrowser::Construct(const FArguments& InArgs)
             .Padding(5.0f)
             [
                 SNew(SSearchBox)
+                .OnTextChanged(this, &SProgramBrowser::SearchBox_OnSearchProgramTextChanged)
             ]
         ]
 
@@ -97,17 +106,26 @@ FReply SProgramBrowser::OnCreateProgramClicked()
     return FReply::Handled();
 }
 
+void SProgramBrowser::SearchBox_OnSearchProgramTextChanged(const FText& Text)
+{
+    ProgramTextFilter->SetRawFilterText(Text);
+}
+
 void SProgramBrowser::InitilizeProgramsData()
 {
     TArray<FString> Files;
     IFileManager::Get().FindFiles(Files, *(FProgramBrowserModule::ProgramsDir / TEXT("*")), false, true);
     for (const FString& File : Files)
     {
+        FString Desc;
+        FFileHelper::LoadFileToString(Desc, *(FProgramBrowserModule::ProgramsDir / File / TEXT("Resources/Desc.txt")));
+        
         Programs.Add(MakeShareable(new FProgram(
             File,
+            Desc,
             "",
-            "",
-            "1.0"
+            "1.0",
+            FProgramBrowserModule::ProgramsDir / File
             )));
     }
 }

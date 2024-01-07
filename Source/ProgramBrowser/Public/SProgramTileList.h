@@ -21,6 +21,11 @@ public:
 
     TSharedRef<ITableRow> ProgramTileList_OnGenerateRow(TSharedRef<FProgram> Program, const TSharedRef<STableViewBase>& TableViewBase);
 
+    SProgramBrowser& GetOwner()
+    {
+        return *Owner.Pin();
+    }
+
 private:
     TArray<TSharedRef<FProgram>> Programs;
     

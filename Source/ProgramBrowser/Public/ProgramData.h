@@ -11,13 +11,15 @@ struct FProgram
 	FName Author;
 	FName Version;
 	FName Configuration;
+	FString Path;
 
-	FProgram(const FString& InName, const FString& InDesc, const FString& InAuthor, const FString& InVersion)
+	FProgram(const FString& InName, const FString& InDesc, const FString& InAuthor, const FString& InVersion, const FString& InPath)
 		:
 	Name(InName),
 	Description(InDesc),
 	Author(InAuthor),
-	Version(InVersion)
+	Version(InVersion),
+	Path(InPath)
 	{}
 };
 

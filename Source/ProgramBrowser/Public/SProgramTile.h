@@ -6,6 +6,7 @@
 #include "Widgets/SCompoundWidget.h"
 
 class FProgramBrowserWorker;
+class SProgramTileList;
 struct FProgram;
 
 /**
@@ -20,7 +21,7 @@ public:
 
     ~SProgramTile();
 
-    void Construct(const FArguments& InArgs, TSharedRef<FProgram> InProgram);
+    void Construct(const FArguments& InArgs, TSharedRef<FProgram> InProgram, TSharedPtr<SProgramTileList> InOwner);
 
     FText GetProgramNameText() const;
 
@@ -32,9 +33,15 @@ public:
 
     FReply OnPackageProgramClicked();
 
-    void BuildProgramCommand();
+    FReply OnBrowserProgramSourceClicked();
+
+    bool BuildProgramCommand();
+
+    bool PackageProgramCommand();
     
 private:
+    TSharedPtr<SProgramTileList> Owner;
+    
     TSharedPtr<FProgram> Program;
 
     TSharedPtr<FSlateDynamicImageBrush> ProgramIcon;
@@ -43,5 +50,8 @@ private:
 
     TSharedPtr<STextBlock> ContentWidget;
 
-    TArray<TSharedPtr<FProgramBrowserWorker>> BuildWorkers;
+    TArray<TSharedPtr<FProgramBrowserWorker>> ProcWorkers;
+
+    TSharedPtr<SNotificationItem> BuildNotification;
+    TSharedPtr<SNotificationItem> PackageNotification;
 };

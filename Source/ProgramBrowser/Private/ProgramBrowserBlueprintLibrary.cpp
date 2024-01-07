@@ -17,7 +17,7 @@ bool UProgramBrowserBlueprintLibrary::BuildProgram(const FString& Commandline, c
 	void* PipeWrite = NULL;
 	verify(FPlatformProcess::CreatePipe(PipeRead, PipeWrite));
 
-	UE_LOG(LogTemp, Warning, TEXT("=================== Build Program %s Started. ==================="), *ProgramName);
+	UE_LOG(LogTemp, Display, TEXT("=================== Build Program %s Started. ==================="), *ProgramName);
             
 	FProcHandle ProcHandle = FDesktopPlatformModule::Get()->InvokeUnrealBuildToolAsync(Commandline, Ar, PipeRead, PipeWrite, true);
 
@@ -33,7 +33,7 @@ bool UProgramBrowserBlueprintLibrary::BuildProgram(const FString& Commandline, c
 		bool bGotReturnCode = FPlatformProcess::GetProcReturnCode(ProcHandle, &OutReturnCode);		
 		check(bGotReturnCode);
 
-		UE_LOG(LogTemp, Warning, TEXT("=================== Build Program %s End. ==================="), *ProgramName);
+		UE_LOG(LogTemp, Display, TEXT("=================== Build Program %s End. ==================="), *ProgramName);
 
 		return true;
 	}
