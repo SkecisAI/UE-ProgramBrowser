@@ -3,6 +3,7 @@
 
 #include "SNewProgramWizard.h"
 
+#include "DesktopPlatformModule.h"
 #include "ProgramBrowser.h"
 #include "ProgramBrowserBlueprintLibrary.h"
 #include "SlateOptMacros.h"
@@ -202,7 +203,7 @@ void SNewProgramWizard::InitilizeProgramTemplatesData()
 			FName(File),
 			FProgramBrowserModule::ProgramTemplatesDir / File,
 			Desc,
-			FProgramBrowserModule::ProgramTemplatesDir / File / TEXT("Resources/Icon.png"))));
+			FProgramBrowserModule::ProgramTemplatesDir / File / TEXT("Resources/TemplateIcon.png"))));
 	}
 }
 

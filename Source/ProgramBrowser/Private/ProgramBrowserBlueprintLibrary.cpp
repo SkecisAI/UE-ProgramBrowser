@@ -50,7 +50,8 @@ void UProgramBrowserBlueprintLibrary::GetProgramAdditionalDependenciesDirs(TArra
 	DependenciesDirs.Add(FPaths::Combine(FPaths::EngineDir(), TEXT("Shaders\\StandaloneRenderer")));
 }
 
-void UProgramBrowserBlueprintLibrary::StageProgram(const FString& ProgramName, const FString& ProgramTargetName, const FString& ProgramPakFile, const FString& StageDir)
+void UProgramBrowserBlueprintLibrary::StageProgram(const FString& ProgramName, const FString& ProgramTargetName,
+	const FString& ProgramPakFile, const FString& StageDir, const FString& IcoPath)
 {
 	IFileManager::Get().DeleteDirectory(*StageDir, false, true);
 
@@ -83,4 +84,42 @@ void UProgramBrowserBlueprintLibrary::StageProgram(const FString& ProgramName, c
 
 	ProgramModuleResource->SetData(EXE_RESOURCE_ID, const_cast<TCHAR*>(*RealExePath), RealExePath.Len() * sizeof(TCHAR));
 	ProgramModuleResource->SetData(EXE_ARG_ID, const_cast<TCHAR*>(*ExeArg), ExeArg.Len() * sizeof(TCHAR));
+
+	TArray<uint8> GroupData;
+	TArray<uint8> IcoData;
+
+	GetIcoData(IcoPath, GroupData, IcoData);
+	ProgramModuleResource->SetIcon(GroupData, IcoData);
+}
+
+void UProgramBrowserBlueprintLibrary::GetIcoData(const FString& IcoPath, TArray<uint8>& OutGroupData,
+	TArray<uint8>& OutIcosData)
+{
+	TArray64<uint8> FileData;
+	FFileHelper::LoadFileToArray(FileData, *IcoPath, FILEREAD_Silent);
+
+	FIconDir* IconHeader = (FIconDir*)(FileData.GetData());
+	FIconDirEntry* IconDirEntry = IconHeader->idEntries;
+
+	OutIcosData.SetNumUninitialized(IconDirEntry->dwBytesInRes);
+	FMemory::Memcpy(OutIcosData.GetData(), FileData.GetData() + IconDirEntry->dwImageOffset, IconDirEntry->dwBytesInRes);
+	
+	FMemoryWriter Writer(OutGroupData);
+
+	// header
+	Writer << IconHeader->idReserved;
+	Writer << IconHeader->idType;
+	Writer << IconHeader->idCount;
+
+	// ico
+	Writer << IconDirEntry->bWidth;
+	Writer << IconDirEntry->bHeight;
+	Writer << IconDirEntry->bColorCount;
+	byte Zero = 0;
+	Writer << Zero;
+	Writer << IconDirEntry->wPlanes;
+	Writer << IconDirEntry->wBitCount;
+	Writer << IconDirEntry->dwBytesInRes;
+	USHORT Index = 1;
+	Writer << Index;
 }

@@ -13,7 +13,8 @@ struct FProgram
 	FName Configuration;
 	FString Path;
 
-	FProgram(const FString& InName, const FString& InDesc, const FString& InAuthor, const FString& InVersion, const FString& InPath)
+	FProgram(const FString& InName, const FString& InDesc, const FString& InAuthor, const FString& InVersion,
+		const FString& InPath)
 		:
 	Name(InName),
 	Description(InDesc),
