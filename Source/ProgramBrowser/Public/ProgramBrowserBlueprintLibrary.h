@@ -7,6 +7,32 @@
 #include "Misc/FileHelper.h"
 #include "ProgramBrowserBlueprintLibrary.generated.h"
 
+
+#pragma pack(push,1)
+struct FIconDirEntry
+{
+	uint8 bWidth;			// Width, in pixels, of the image
+	uint8 bHeight;			// Height, in pixels, of the image
+	uint8 bColorCount;		// Number of colors in image (0 if >=8bpp)
+	uint8 bReserved;		// Reserved ( must be 0)
+	uint16 wPlanes;			// Color Planes
+	uint16 wBitCount;		// Bits per pixel
+	uint32 dwBytesInRes;	// How many bytes in this resource?
+	uint32 dwImageOffset;	// Where in the file is this image?
+};
+#pragma pack(pop)
+
+
+#pragma pack(push,1)
+struct FIconDir
+{
+	uint16 idReserved;			// Reserved (must be 0)
+	uint16 idType;				// Resource Type (1 for icons)
+	uint16 idCount;				// How many images?
+	FIconDirEntry idEntries[1];	// An entry for each image (idCount of 'em)
+};
+#pragma pack(pop)
+
 /**
  * 
  */
@@ -16,11 +42,14 @@ class PROGRAMBROWSER_API UProgramBrowserBlueprintLibrary : public UBlueprintFunc
 	GENERATED_BODY()
 
 public:
-	static bool BuildProgram(const FString& Commandline, const FString& ProgramName);
+	static bool RunUBT(const FString& Commandline);
 
 	static void GetProgramAdditionalDependenciesDirs(TArray<FString>& DependenciesDirs);
 
-	static void StageProgram(const FString& ProgramName, const FString& ProgramTargetName, const FString& ProgramPakFile, const FString& StageDir);
+	static void StageProgram(const FString& ProgramName, const FString& ProgramTargetName,
+		const FString& ProgramPakFile, const FString& StageDir, const FString& IcoPath);
+
+	static void GetIcoData(const FString& IcoPath, TArray<uint8>& OutGroupData, TArray<uint8>& OutIcosData);
 };
 
 
@@ -36,6 +65,15 @@ public:
 	{
 		Thread = FRunnableThread::Create(this, *ThreadName);
 		check(Thread);
+	}
+
+	~FProgramBrowserWorker()
+	{
+		if (Thread != nullptr)
+		{
+			Thread->Kill(true);
+			delete Thread;
+		}
 	}
 
 	virtual uint32 Run() override

@@ -28,9 +28,15 @@ bool FProgramModuleResource::SetData(int32 ResourceId, void* Data, int32 DataLen
     return true;
 }
 
-bool FProgramModuleResource::SetIcon(void* Data, int32 DataLen)
+bool FProgramModuleResource::SetIcon(TArray<uint8>& GroupData, TArray<uint8>& IcoData)
 {
-    if (!UpdateResource(Handle, RT_RCDATA, MAKEINTRESOURCE(101), 1033, Data, DataLen))
+    if (!UpdateResource(Handle, RT_GROUP_ICON, MAKEINTRESOURCE(101), 1033, GroupData.GetData(), GroupData.Num()))
+    {
+        UE_LOG(LogTemp, Error, TEXT("UpdateResource failed!"));
+        return false;
+    }
+
+    if (!UpdateResource(Handle, RT_ICON, MAKEINTRESOURCE(1), 1033, IcoData.GetData(), IcoData.Num()))
     {
         UE_LOG(LogTemp, Error, TEXT("UpdateResource failed!"));
         return false;
