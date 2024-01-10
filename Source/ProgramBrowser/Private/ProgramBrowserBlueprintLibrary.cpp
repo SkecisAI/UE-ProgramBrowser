@@ -9,15 +9,13 @@
 #define EXE_RESOURCE_ID 201
 #define EXE_ARG_ID      202
 
-bool UProgramBrowserBlueprintLibrary::BuildProgram(const FString& Commandline, const FString& ProgramName)
+bool UProgramBrowserBlueprintLibrary::RunUBT(const FString& Commandline)
 {
 	FOutputDevice& Ar = *GLog;
 	
 	void* PipeRead = NULL;
 	void* PipeWrite = NULL;
 	verify(FPlatformProcess::CreatePipe(PipeRead, PipeWrite));
-
-	UE_LOG(LogTemp, Display, TEXT("=================== Build Program %s Started. ==================="), *ProgramName);
             
 	FProcHandle ProcHandle = FDesktopPlatformModule::Get()->InvokeUnrealBuildToolAsync(Commandline, Ar, PipeRead, PipeWrite, true);
 
@@ -32,8 +30,6 @@ bool UProgramBrowserBlueprintLibrary::BuildProgram(const FString& Commandline, c
 		int32 OutReturnCode;
 		bool bGotReturnCode = FPlatformProcess::GetProcReturnCode(ProcHandle, &OutReturnCode);		
 		check(bGotReturnCode);
-
-		UE_LOG(LogTemp, Display, TEXT("=================== Build Program %s End. ==================="), *ProgramName);
 
 		return true;
 	}
@@ -50,7 +46,8 @@ void UProgramBrowserBlueprintLibrary::GetProgramAdditionalDependenciesDirs(TArra
 	DependenciesDirs.Add(FPaths::Combine(FPaths::EngineDir(), TEXT("Shaders\\StandaloneRenderer")));
 }
 
-void UProgramBrowserBlueprintLibrary::StageProgram(const FString& ProgramName, const FString& ProgramTargetName, const FString& ProgramPakFile, const FString& StageDir)
+void UProgramBrowserBlueprintLibrary::StageProgram(const FString& ProgramName, const FString& ProgramTargetName,
+	const FString& ProgramPakFile, const FString& StageDir, const FString& IcoPath)
 {
 	IFileManager::Get().DeleteDirectory(*StageDir, false, true);
 
@@ -83,4 +80,49 @@ void UProgramBrowserBlueprintLibrary::StageProgram(const FString& ProgramName, c
 
 	ProgramModuleResource->SetData(EXE_RESOURCE_ID, const_cast<TCHAR*>(*RealExePath), RealExePath.Len() * sizeof(TCHAR));
 	ProgramModuleResource->SetData(EXE_ARG_ID, const_cast<TCHAR*>(*ExeArg), ExeArg.Len() * sizeof(TCHAR));
+
+	TArray<uint8> GroupData;
+	TArray<uint8> IcoData;
+
+	if (GetIcoData(IcoPath, GroupData, IcoData))
+	{
+		ProgramModuleResource->SetIcon(GroupData, IcoData);
+	}
+}
+
+bool UProgramBrowserBlueprintLibrary::GetIcoData(const FString& IcoPath, TArray<uint8>& OutGroupData,
+                                                 TArray<uint8>& OutIcosData)
+{
+	TArray64<uint8> FileData;
+	if (!FFileHelper::LoadFileToArray(FileData, *IcoPath, FILEREAD_Silent))
+	{
+		return false;
+	}
+
+	FIconDir* IconHeader = (FIconDir*)(FileData.GetData());
+	FIconDirEntry* IconDirEntry = IconHeader->idEntries;
+
+	OutIcosData.SetNumUninitialized(IconDirEntry->dwBytesInRes);
+	FMemory::Memcpy(OutIcosData.GetData(), FileData.GetData() + IconDirEntry->dwImageOffset, IconDirEntry->dwBytesInRes);
+	
+	FMemoryWriter Writer(OutGroupData);
+
+	// header
+	Writer << IconHeader->idReserved;
+	Writer << IconHeader->idType;
+	Writer << IconHeader->idCount;
+
+	// ico
+	Writer << IconDirEntry->bWidth;
+	Writer << IconDirEntry->bHeight;
+	Writer << IconDirEntry->bColorCount;
+	byte Zero = 0;
+	Writer << Zero;
+	Writer << IconDirEntry->wPlanes;
+	Writer << IconDirEntry->wBitCount;
+	Writer << IconDirEntry->dwBytesInRes;
+	USHORT Index = 1;
+	Writer << Index;
+
+	return true;
 }

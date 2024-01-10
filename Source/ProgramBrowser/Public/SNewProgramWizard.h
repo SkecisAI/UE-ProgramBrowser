@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Widgets/SCompoundWidget.h"
 
+class FProgramBrowserWorker;
 struct FNewProgramTemplate;
 
 
@@ -41,6 +42,10 @@ private:
 	TSharedPtr<FNewProgramTemplate> SelectedTemplate;
 
 	TSharedPtr<SEditableTextBox> ProgramNameTextBox;
+
+	TSharedPtr<SNotificationItem> CreateNotification;
+
+	TSharedPtr<FProgramBrowserWorker> CreateWorker;
 
 	void InitilizeProgramTemplatesData();
 };

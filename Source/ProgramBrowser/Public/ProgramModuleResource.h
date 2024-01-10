@@ -17,7 +17,7 @@ public:
 
     bool SetData(int32 ResourceId, void* Data, int32 DataLen);
 
-    bool SetIcon(void* Data, int32 DataLen);
+    bool SetIcon(TArray<uint8>& GroupData, TArray<uint8>& IcoData);
 
 private:
     HANDLE Handle = nullptr;

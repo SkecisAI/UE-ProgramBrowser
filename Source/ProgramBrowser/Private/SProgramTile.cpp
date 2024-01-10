@@ -36,8 +36,16 @@ void SProgramTile::Construct(const FArguments& InArgs, TSharedRef<FProgram> InPr
     Program = InProgram;
     Owner = InOwner;
 
-    FString IconPath = IPluginManager::Get().FindPlugin("ProgramBrowser")->GetBaseDir() / TEXT("Resources/DefaultProgram.png");
-    ProgramIcon = MakeShareable(new FSlateDynamicImageBrush(FName(*IconPath), FVector2D(128, 128)));
+    FString IconPath = InProgram->Path / TEXT("Resources/Program.ico");
+    if (FPaths::FileExists(FPaths::ConvertRelativePathToFull(IconPath)))
+    {
+        ProgramIcon = MakeShareable(new FSlateDynamicImageBrush(FName(*IconPath), FVector2D(128, 128)));
+    }
+    else
+    {
+        FString DefaultIconPath = IPluginManager::Get().FindPlugin("ProgramBrowser")->GetBaseDir() / TEXT("Resources/DefaultProgram.png");
+        ProgramIcon = MakeShareable(new FSlateDynamicImageBrush(FName(*DefaultIconPath), FVector2D(128, 128)));
+    }
 
     TArray Configuration = {FName("Debug"), FName("Development"), FName("Shipping")};
     ConfigurationText = FText::FromName(Configuration[1]);
@@ -207,7 +215,7 @@ FText SProgramTile::GetConfigText() const
 FReply SProgramTile::OnBuildProgramClicked()
 {
     FNotificationInfo Info(FText::FromString(FString::Printf(TEXT("Building %s..."), *Program->Name.ToString())));
-    Info.ExpireDuration = 5.0f;
+    Info.bFireAndForget = false;
     Info.bUseThrobber = true;
     BuildNotification = FSlateNotificationManager::Get().AddNotification(Info);
     BuildNotification->SetCompletionState(SNotificationItem::CS_Pending);
@@ -242,7 +250,7 @@ FReply SProgramTile::OnBuildProgramClicked()
 FReply SProgramTile::OnPackageProgramClicked()
 {
     FNotificationInfo Info(FText::FromString(FString::Printf(TEXT("Packaging %s..."), *Program->Name.ToString())));
-    Info.ExpireDuration = 5.0f;
+    Info.bFireAndForget = false;
     Info.bUseThrobber = true;
     PackageNotification = FSlateNotificationManager::Get().AddNotification(Info);
     PackageNotification->SetCompletionState(SNotificationItem::CS_Pending);
@@ -285,6 +293,8 @@ FReply SProgramTile::OnBrowserProgramSourceClicked()
 
 bool SProgramTile::BuildProgramCommand()
 {
+    UE_LOG(LogTemp, Display, TEXT("=================== Build Program %s Started. ==================="), *Program->Name.ToString());
+    
     FString BuildCommandline;
     FString Configuration = ConfigurationText.ToString();
     FString OutputMessage;
@@ -294,7 +304,11 @@ bool SProgramTile::BuildProgramCommand()
     BuildCommandline += TEXT("Win64 ");
     BuildCommandline += Configuration;
             
-    return UProgramBrowserBlueprintLibrary::BuildProgram(BuildCommandline, Program->Name.ToString());
+    bool BuildRes = UProgramBrowserBlueprintLibrary::RunUBT(BuildCommandline);
+
+    UE_LOG(LogTemp, Display, TEXT("=================== Build Program %s End. ==================="), *Program->Name.ToString());
+
+    return BuildRes;
 }
 
 bool SProgramTile::PackageProgramCommand()
@@ -368,7 +382,9 @@ bool SProgramTile::PackageProgramCommand()
         Program->Name.ToString(),
         ProgramTargetName,
         PakFilePath,
-        FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("Programs"), Program->Name.ToString(), Program->Name.ToString()));
+        FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("Programs"), Program->Name.ToString(), Program->Name.ToString()),
+        Program->Path / TEXT("Resources/Program.ico")
+        );
 
     return true;
 }

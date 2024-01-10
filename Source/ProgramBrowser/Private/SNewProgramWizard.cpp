@@ -3,11 +3,15 @@
 
 #include "SNewProgramWizard.h"
 
+#include "DesktopPlatformModule.h"
 #include "ProgramBrowser.h"
 #include "ProgramBrowserBlueprintLibrary.h"
 #include "SlateOptMacros.h"
 #include "SPrimaryButton.h"
 #include "ProgramData.h"
+#include "Async/Async.h"
+#include "Framework/Notifications/NotificationManager.h"
+#include "Widgets/Notifications/SNotificationList.h"
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
@@ -180,11 +184,39 @@ FReply SNewProgramWizard::OnCreateNewProgramClicked()
 		return FReply::Handled();
 	}
 
-	FString NewProgramPath = FPaths::Combine(FProgramBrowserModule::ProgramsDir, ProgramNameText.ToString());
+	FNotificationInfo Info(FText::FromString(FString::Printf(TEXT("Creating Program %s..."), *ProgramNameText.ToString())));
+	Info.bFireAndForget = false;
+	Info.bUseThrobber = true;
+	CreateNotification = FSlateNotificationManager::Get().AddNotification(Info);
+	CreateNotification->SetCompletionState(SNotificationItem::CS_Pending);
 
-	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
-	ProgramUtils::FCopyProgramFileAndDirs CopyProgramFileAndDirs(PlatformFile, SelectedTemplate->Path, NewProgramPath, ProgramNameText.ToString());
-	PlatformFile.IterateDirectoryRecursively(*SelectedTemplate->Path, CopyProgramFileAndDirs);
+	CreateWorker.Reset();
+	CreateWorker = MakeShareable(new FProgramBrowserWorker(TEXT("Thread-CreateProgram"), [this, ProgramNameText]()
+	{
+		FString NewProgramPath = FPaths::Combine(FProgramBrowserModule::ProgramsDir, ProgramNameText.ToString());
+
+		IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
+		ProgramUtils::FCopyProgramFileAndDirs CopyProgramFileAndDirs(PlatformFile, SelectedTemplate->Path, NewProgramPath, ProgramNameText.ToString());
+		PlatformFile.IterateDirectoryRecursively(*SelectedTemplate->Path, CopyProgramFileAndDirs);
+
+		bool Res = UProgramBrowserBlueprintLibrary::RunUBT(TEXT("-ProjectFiles"));
+		AsyncTask(ENamedThreads::GameThread, [this, Res]()
+		{
+			if (Res)
+			{
+				CreateNotification->SetCompletionState(SNotificationItem::CS_Success);
+			}
+			else
+			{
+				CreateNotification->SetCompletionState(SNotificationItem::CS_Fail);
+			}
+
+			CreateNotification->ExpireAndFadeout();
+			CreateNotification.Reset();
+		});
+	}));
+	
+
 
 	return FReply::Handled();
 }
@@ -202,7 +234,7 @@ void SNewProgramWizard::InitilizeProgramTemplatesData()
 			FName(File),
 			FProgramBrowserModule::ProgramTemplatesDir / File,
 			Desc,
-			FProgramBrowserModule::ProgramTemplatesDir / File / TEXT("Resources/Icon.png"))));
+			FProgramBrowserModule::ProgramTemplatesDir / File / TEXT("Resources/TemplateIcon.png"))));
 	}
 }
 
