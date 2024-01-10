@@ -21,7 +21,7 @@
 2. 一键式构建（Build），一键式打包（Package）
 3. 方便可视化的Program管理
 4. 打包后的Program可以直接运行（对于使用三方库的Program，需要手动转移，还未找到自动化的方法）
-5. ...
+5. Program可自定义ico（更换Resources目录下的Program.ico）
 
 # 说明
 
