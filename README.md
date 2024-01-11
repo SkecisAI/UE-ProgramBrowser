@@ -18,7 +18,7 @@
 # 功能
 
 1. 使用模板代码创建独立应用程序 （类似插件管理器 Plugins Browser）：有普通模板、Slate界面模板
-2. 一键式构建（Build），一键式打包（Package）
+2. 一键构建（Build），一键打包（Package）
 3. 方便可视化的Program管理
 4. 打包后的Program可以直接运行（对于使用三方库的Program，需要手动转移，还未找到自动化的方法）
 5. Program可自定义ico（更换Resources目录下的Program.ico）
@@ -27,7 +27,7 @@
 
 - 可浏览的Program**需要**放在 `\Engine\Source\Programs\Programs_Collection`下
 - 打包后的Program放在项目路径下的`\Saved\Programs`下
-- **只适用**于源码版引擎（安装版还在研究中）
+- **只适用**于源码版引擎（安装版还在研究中，独立应用不依赖引擎，其实意义不大）
 - 目前仅支持Windows 64位
 - 功能还有许多欠缺，还需完善...
 
