@@ -1,6 +1,6 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "MySlateApp.h"
+#include "PROGRAM_NAMEApp.h"
 #include "RequiredProgramMainCPPInclude.h"
 #include "Widgets/Docking/SDockTab.h"
 #include "Framework/Application/SlateApplication.h"
