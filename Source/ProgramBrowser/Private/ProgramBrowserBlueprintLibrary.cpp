@@ -39,9 +39,12 @@ bool UProgramBrowserBlueprintLibrary::RunUBT(const FString& Commandline)
 
 void UProgramBrowserBlueprintLibrary::GetProgramAdditionalDependenciesDirs(TArray<FString>& DependenciesDirs)
 {
-	DependenciesDirs.Add(FPaths::Combine(FPaths::EngineContentDir(), TEXT("Slate\\Common")));
-	DependenciesDirs.Add(FPaths::Combine(FPaths::EngineContentDir(), TEXT("Slate\\Old")));
-	DependenciesDirs.Add(FPaths::Combine(FPaths::EngineContentDir(), TEXT("Editor\\Slate\\Icons")));
+	// DependenciesDirs.Add(FPaths::Combine(FPaths::EngineContentDir(), TEXT("Slate\\Common")));
+	// DependenciesDirs.Add(FPaths::Combine(FPaths::EngineContentDir(), TEXT("Slate\\Old")));
+	// DependenciesDirs.Add(FPaths::Combine(FPaths::EngineContentDir(), TEXT("Editor\\Slate\\Icons")));
+	DependenciesDirs.Add(FPaths::Combine(FPaths::EngineContentDir(), TEXT("Slate")));
+	DependenciesDirs.Add(FPaths::Combine(FPaths::EngineContentDir(), TEXT("Editor")));
+	
 	DependenciesDirs.Add(FPaths::Combine(FPaths::EngineContentDir(), TEXT("Internationalization")));
 	DependenciesDirs.Add(FPaths::Combine(FPaths::EngineDir(), TEXT("Shaders\\StandaloneRenderer")));
 }

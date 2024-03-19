@@ -26,6 +26,8 @@ public:
 
     FReply OnCreateProgramClicked();
 
+    FReply OnOpenProgramPackageDir();
+
     void SearchBox_OnSearchProgramTextChanged(const FText& Text);
 
     FProgramFilter& GetProgramFilter()

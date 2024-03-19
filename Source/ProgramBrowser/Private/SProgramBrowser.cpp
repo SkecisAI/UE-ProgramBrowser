@@ -69,9 +69,43 @@ void SProgramBrowser::Construct(const FArguments& InArgs)
             
             + SHorizontalBox::Slot()
             .Padding(5.0f)
+            .FillWidth(1.0)
+            .HAlign(HAlign_Fill)
             [
                 SNew(SSearchBox)
                 .OnTextChanged(this, &SProgramBrowser::SearchBox_OnSearchProgramTextChanged)
+            ]
+
+            + SHorizontalBox::Slot()
+            .AutoWidth()
+            .Padding(5.0f)
+            .HAlign(HAlign_Right)
+            [
+                SNew(SButton)
+                .OnClicked(this, &SProgramBrowser::OnOpenProgramPackageDir)
+                .ToolTipText(LOCTEXT("OpenProgramsPackageDirToolTipText", "open the directory of packaged programs."))
+                .Content()
+                [
+                    SNew(SHorizontalBox)
+
+                    + SHorizontalBox::Slot()
+                    .HAlign(HAlign_Center)
+                    .VAlign(VAlign_Center)
+                    .Padding(2.0f)
+                    [
+                        SNew(SImage)
+                        .Image(FAppStyle::Get().GetBrush("Icons.Package"))
+                    ]
+                        
+                    + SHorizontalBox::Slot()
+                    .VAlign(VAlign_Center)
+                    .AutoWidth()
+                    [
+                        SNew(STextBlock)
+                        .TextStyle(FAppStyle::Get(), "SmallButtonText")
+                        .Text(LOCTEXT("ProgramPackagesLabel", "Program Packages"))
+                    ]
+                ]
             ]
         ]
 
@@ -102,6 +136,13 @@ void SProgramBrowser::Construct(const FArguments& InArgs)
 FReply SProgramBrowser::OnCreateProgramClicked()
 {
     FGlobalTabmanager::Get()->TryInvokeTab(FProgramBrowserModule::ProgramBrowserCreatorTabName);
+
+    return FReply::Handled();
+}
+
+FReply SProgramBrowser::OnOpenProgramPackageDir()
+{
+    FPlatformProcess::ExploreFolder(*FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectSavedDir(), "Programs")));
 
     return FReply::Handled();
 }

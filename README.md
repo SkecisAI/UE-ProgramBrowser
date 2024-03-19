@@ -1,11 +1,16 @@
 # UE ProgramBrowser
 
 使用虚幻引擎（Unreal Engine）提供的资源创建独立应用程序（Standalone Program）而非游戏（Not Game），本插件实现了对独立应用程序从创建到打包的一键式流程管理
-
-![find it](./Resources/3.png)
+1. 插件入口
 ![Program Browser](./Resources/1.png)
+
+2. Program管理面板
 ![Create Program](./Resources/2.png)
-最终打包的结果：
+
+3. 新建Program面板
+![find it](./Resources/3.png)
+
+4. 最终打包的结果：
 ![result](./Resources/4.png)
 
 # 运行环境

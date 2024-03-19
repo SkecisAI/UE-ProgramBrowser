@@ -21,17 +21,17 @@ void RestoreSlate()
 				.Text(FText::FromString(TEXT("Hello World!")))
 			];
 	};
-	FGlobalTabmanager::Get()->RegisterNomadTabSpawner("My Slate Program", FOnSpawnTab::CreateLambda(SpawnGallery));
+	FGlobalTabmanager::Get()->RegisterNomadTabSpawner("PROGRAM_NAME", FOnSpawnTab::CreateLambda(SpawnGallery));
 	
-	TSharedRef<FTabManager::FLayout> Layout = FTabManager::NewLayout( "MySlateProgram_Layout" )
+	TSharedRef<FTabManager::FLayout> Layout = FTabManager::NewLayout( "PROGRAM_NAME_Layout" )
 	->AddArea
 	(
 		FTabManager::NewArea(1230, 900)
 		->Split
 		(
 			FTabManager::NewStack()
-			->AddTab("My Slate Program", ETabState::OpenedTab)
-			->SetForegroundTab(FName("My Slate Program"))
+			->AddTab("PROGRAM_NAME", ETabState::OpenedTab)
+			->SetForegroundTab(FName("PROGRAM_NAME"))
 		)
 	);
 
@@ -58,7 +58,7 @@ int RunPROGRAM_NAME( const TCHAR* CommandLine )
 	FSlateApplication::InitHighDPI(true);
 
 	// set the application name
-	FGlobalTabmanager::Get()->SetApplicationTitle(LOCTEXT("AppTitle", "My Slate"));
+	FGlobalTabmanager::Get()->SetApplicationTitle(LOCTEXT("AppTitle", "PROGRAM_NAME"));
 
 	RestoreSlate();
 	
