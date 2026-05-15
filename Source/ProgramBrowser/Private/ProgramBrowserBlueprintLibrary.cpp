@@ -42,30 +42,30 @@ void UProgramBrowserBlueprintLibrary::GetProgramAdditionalDependenciesDirs(TArra
 	// DependenciesDirs.Add(FPaths::Combine(FPaths::EngineContentDir(), TEXT("Slate\\Common")));
 	// DependenciesDirs.Add(FPaths::Combine(FPaths::EngineContentDir(), TEXT("Slate\\Old")));
 	// DependenciesDirs.Add(FPaths::Combine(FPaths::EngineContentDir(), TEXT("Editor\\Slate\\Icons")));
-	DependenciesDirs.Add(FPaths::Combine(FPaths::EngineContentDir(), TEXT("Slate")));
-	DependenciesDirs.Add(FPaths::Combine(FPaths::EngineContentDir(), TEXT("Editor")));
+	//DependenciesDirs.Add(FPaths::Combine(FPaths::EngineContentDir(), TEXT("Slate")));
+	//DependenciesDirs.Add(FPaths::Combine(FPaths::EngineContentDir(), TEXT("Editor")));
 	
 	DependenciesDirs.Add(FPaths::Combine(FPaths::EngineContentDir(), TEXT("Internationalization")));
-	DependenciesDirs.Add(FPaths::Combine(FPaths::EngineDir(), TEXT("Shaders\\StandaloneRenderer")));
+	//DependenciesDirs.Add(FPaths::Combine(FPaths::EngineDir(), TEXT("Shaders\\StandaloneRenderer")));
 }
 
 void UProgramBrowserBlueprintLibrary::StageProgram(const FString& ProgramName, const FString& ProgramTargetName,
-	const FString& ProgramPakFile, const FString& StageDir, const FString& IcoPath)
+	const TArray<TSharedPtr<FProgramStageFile>>& NonUFSFilesToCopy, const FString& StageDir, const FString& IcoPath)
 {
-	IFileManager::Get().DeleteDirectory(*StageDir, false, true);
+	// IFileManager::Get().DeleteDirectory(*StageDir, false, true);
 
-	TArray<FString> ExeDependencies;
-	ExeDependencies.Add(TEXT("tbb.dll"));
-	ExeDependencies.Add(TEXT("tbbmalloc.dll"));
-	ExeDependencies.Add(FString::Printf(TEXT("%s.exe"), *ProgramTargetName));
-	ExeDependencies.Add(FString::Printf(TEXT("%s.pdb"), *ProgramTargetName));
+	// TArray<FString> ExeDependencies;
+	// ExeDependencies.Add(TEXT("tbb.dll"));
+	// ExeDependencies.Add(TEXT("tbbmalloc.dll"));
+	// ExeDependencies.Add(FString::Printf(TEXT("%s.exe"), *ProgramTargetName));
+	// ExeDependencies.Add(FString::Printf(TEXT("%s.pdb"), *ProgramTargetName));
 
-	FString Dest = FPaths::Combine(StageDir, TEXT("Engine\\Binaries\\Win64"));
-	for (FString& Dependency : ExeDependencies)
+	// FString Dest = FPaths::Combine(StageDir, TEXT("Engine\\Binaries\\Win64"));
+	for (auto& StageFile : NonUFSFilesToCopy)
 	{
-		IFileManager::Get().Copy(*(Dest / Dependency), *FPaths::Combine(FPaths::EngineDir(), TEXT("Binaries\\Win64"), Dependency));
+		IFileManager::Get().Copy(*StageFile->TargetPath, *StageFile->SourcePath);
 	}
-	IFileManager::Get().Move(*FPaths::Combine(StageDir, TEXT("Engine\\Content\\Paks"), ProgramName + TEXT(".pak")), *ProgramPakFile);
+	//IFileManager::Get().Move(*FPaths::Combine(StageDir, TEXT("Engine\\Content\\Paks"), ProgramName + TEXT(".pak")), *ProgramPakFile);
 
 	FString BootstrapPath = FPaths::Combine(FPaths::EngineDir(), TEXT("Binaries\\Win64\\BootstrapPackagedGame-Win64-Shipping.exe"));
 	FString ProgramBootstrapPath = FPaths::Combine(StageDir, ProgramName + TEXT(".exe"));

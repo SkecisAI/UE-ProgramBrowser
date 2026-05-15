@@ -334,18 +334,56 @@ bool SProgramTile::PackageProgramCommand()
         ProgramTargetName = Program->Name.ToString();
     }
 
+    TArray<TSharedPtr<FProgramStageFile>> NonUFSFilesToCopy;
+    FString StageDir = FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("Programs"), Program->Name.ToString());
+
     FString ReceiptPath = FPaths::Combine(FPaths::EngineDir(), TEXT("Binaries\\Win64"), ProgramTargetName + TEXT(".target"));
     FTargetReceipt Receipt;
-    if(!Receipt.Read(ReceiptPath))
+    if(!Receipt.Read(ReceiptPath, false))
     {
         UE_LOG(LogTemp, Error, TEXT("Package program %s failed: target not existed."), *Program->Name.ToString());
         return false;
     }
 
+    static FString EngineDirPrifx = TEXT("$(EngineDir)");
+
+    for (const FBuildProduct& BuildProduct : Receipt.BuildProducts)
+    {
+        FString ReceiptEnginePath = BuildProduct.Path.Replace(*EngineDirPrifx, *(FPaths::EngineDir()));
+        FString TargetPath = BuildProduct.Path.Replace(*EngineDirPrifx, *(StageDir / TEXT("Engine")));
+
+        if (BuildProduct.Type.Equals(TEXT("Executable")) ||
+            (BuildProduct.Type.Equals(TEXT("SymbolFile")) && !ProgramTargetName.EndsWith(TEXT("Shipping"))) ||
+            BuildProduct.Type.Equals(TEXT("DynamicLibrary")))
+        {
+            NonUFSFilesToCopy.Add(MakeShareable(new FProgramStageFile{FPaths::ConvertRelativePathToFull(ReceiptEnginePath), FPaths::ConvertRelativePathToFull(TargetPath)}));
+        }
+    }
+
     for (const FRuntimeDependency& Dependency : Receipt.RuntimeDependencies)
     {
         FString DependencyRelPath = Dependency.Path;
-        PakCommandsList.Add(FString::Printf(TEXT("\"%s\" \"%s\" -compress"), *FPaths::ConvertRelativePathToFull(DependencyRelPath), *DependencyRelPath));
+
+        if (Dependency.Type.Equals(TEXT("UFS"))
+        {
+            FString EngineDir = FPaths::EngineDir();
+            if (EngineDir.Len() > 0 && EngineDir[EngineDir.Len() - 1] == TEXT('/'))
+            {
+                EngineDir = EngineDir.Left(EngineDir.Len() - 1);
+            }
+            DependencyRelPath = EngineDir + DependencyRelPath.Mid(EngineDirPrifx.Len());
+
+            PakCommandsList.Add(FString::Printf(TEXT("\"%s\" \"%s\" -compress"), *FPaths::ConvertRelativePathToFull(DependencyRelPath), *DependencyRelPath));
+        }
+        else if (Dependency.Type.Equals(TEXT("NonUFS")))
+        {
+            TSharedPtr<FProgramStageFile> StageFile = MakeShared<FProgramStageFile>();
+            StageFile->SourcePath = FPaths::ConvertRelativePathToFull(Dependency.Path.Replace(*EngineDirPrifx, *(FPaths::EngineDir())));
+            StageFile->TargetPath = FPaths::ConvertRelativePathToFull(Dependency.Path.Replace(*EngineDirPrifx, *(StageDir / TEXT("Engine"))));
+            NonUFSFilesToCopy.Add(StageFile)
+            ;
+        }
+        
     }
 
     TArray<FString> AdditionalDependicesFiles;
@@ -361,15 +399,14 @@ bool SProgramTile::PackageProgramCommand()
     }
 
 
-    FString PakFilePath = FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("Programs"), Program->Name.ToString()) / Program->Name.ToString() + TEXT(".pak");
     FString PakCommandsFile = FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("Programs"), Program->Name.ToString()) / TEXT("PakCommandList.txt");
-
     if (!FFileHelper::SaveStringArrayToFile(PakCommandsList, *PakCommandsFile))
     {
         UE_LOG(LogTemp, Error, TEXT("Package program %s failed: save pak command file failed."), *Program->Name.ToString());
         return false;
     }
     
+    FString PakFilePath = FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("Programs"), Program->Name.ToString()) / Program->Name.ToString() + TEXT(".pak");
     FString UnrealPakCMD = FString::Printf(TEXT("\"%s\" -create=\"%s\" -compressionformats=Oodle"), *PakFilePath, *PakCommandsFile);
 
     if (!ExecuteUnrealPak(*UnrealPakCMD))
@@ -378,11 +415,13 @@ bool SProgramTile::PackageProgramCommand()
         return false;
     }
 
+    IFileManager::Get().Move(*FPaths::Combine(StageDir, TEXT("Engine\\Content\\Paks"), Program->Name.ToString() + TEXT(".pak")), *PakFilePath);
+
     UProgramBrowserBlueprintLibrary::StageProgram(
         Program->Name.ToString(),
         ProgramTargetName,
-        PakFilePath,
-        FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("Programs"), Program->Name.ToString(), Program->Name.ToString()),
+        NonUFSFilesToCopy,
+        StageDir,
         Program->Path / TEXT("Resources/Program.ico")
         );
 
